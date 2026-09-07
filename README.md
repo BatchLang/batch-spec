@@ -22,7 +22,7 @@ define linter rules (E/W/S/SEC/P codes) -- those live in Blinter's `spec/` tree.
 
 ## Versioning
 
-The package version is the contents of [`VERSION`](VERSION) (currently **0.70.0**). Releases are intended to be tagged `vMAJOR.MINOR.PATCH` matching that file. Pin a
+The package version is the contents of [`VERSION`](VERSION) (currently **0.70.1**). Releases are intended to be tagged `vMAJOR.MINOR.PATCH` matching that file. Pin a
 published tag via git submodule or lock file once it exists; do not depend on `main`
 directly in production CI.
 

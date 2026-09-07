@@ -70,6 +70,9 @@ positive indexes / ranges / `*`; zero indexes rejected), and `usebackq` /
 option text are validated. `delims=` is accepted as an option keyword but its
 delimiter-character semantics are not structurally constrained by the grammar
 (see [`data/expansion.yaml`](../data/expansion.yaml) `for_f.option_details.delims`).
+A usebackq backtick `command` is a single `BACKTICK_STRING` token, so nested
+parentheses and double quotes inside the backticks do not close `IN (` (see
+`for-f-usebackq-nested-paren-command-valid`).
 The grammar does require space/tab between `IN`/`DO`/`ELSE` and a following
 `(` (live cmd rejects glued `in(` / `do(` / `else(`). IF may glue `(`
 immediately after the IF keyword as a paren-wrapped predicate (`if(1==1)`,

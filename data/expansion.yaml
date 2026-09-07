@@ -1,4 +1,4 @@
-version: 60
+version: 61
 
 # Percent-tilde (%~) expansion rules
 # Authoritative syntax: audit/cmd-help/call-help.txt (CALL /?)
@@ -542,7 +542,13 @@ for_f:
       commonly fails to parse (for example ') was unexpected at this time');
       caret-escape them as ^(...^) inside the quotes when those characters are
       data. Prefer the non-usebackq "string" form when the text holds parentheses
-      and no embedded double quotes are required.
+      and no embedded double quotes are required. Parentheses inside a usebackq
+      backtick `command` (and inside double-quoted filenames) are data: they do
+      not close the FOR IN ( ... ) grouping. The IN operand closes at the
+      parenthesis that balances the opener outside those quoted forms. The
+      grammar BACKTICK_STRING token implements this for command form, so nested
+      parentheses in a child command such as powershell -Command "(Get-Item
+      .).FullName" remain inside the backtick operand.
   useback_synonym: >-
     Live cmd.exe also accepts useback as a synonym for usebackq (trailing q
     optional). Prefer the documented usebackq spelling in new scripts.
@@ -663,12 +669,14 @@ for_f:
     inner FOR completes, the outer value is restored on modern Windows.
   input_forms: >-
     file-set; "string" (or 'string' with usebackq); 'command' (or `command`
-    with usebackq). A bare/multi fileset IN (a.txt b.txt) opens files in listed
-    order (each file is a separate input for skip= and eol=). Blank lines in
-    file and command-output input are skipped (FOR /?): a physical empty line
-    does not produce a loop iteration. A quoted multi-string file-set form such
-    as ("a" "" "b") is not a blank-line probe; cmd treats that as a single
-    string argument rather than three lines.
+    with usebackq). Nested parentheses inside a usebackq backtick command (or
+    inside a double-quoted filename) do not close IN (. A bare/multi fileset
+    IN (a.txt b.txt) opens files in listed order (each file is a separate input
+    for skip= and eol=). Blank lines in file and command-output input are
+    skipped (FOR /?): a physical empty line does not produce a loop iteration.
+    A quoted multi-string file-set form such as ("a" "" "b") is not a
+    blank-line probe; cmd treats that as a single string argument rather than
+    three lines.
   fileset_member_delimiters: >-
     Unquoted FOR /F file-set members split on the same delimiters as classic
     FOR sets: space, tab, comma, semicolon, and equals. IN (a.txt,b.txt),
