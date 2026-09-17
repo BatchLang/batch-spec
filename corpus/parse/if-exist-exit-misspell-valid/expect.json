@@ -1,0 +1,10 @@
+{
+  "description": "IF EXIT misspelling is a live syntax error (keyword is EXIST)",
+  "parse": {
+    "expect_syntax_errors": true
+  },
+  "tags": [
+    "if",
+    "negative"
+  ]
+}

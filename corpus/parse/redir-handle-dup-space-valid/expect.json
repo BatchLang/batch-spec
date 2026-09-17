@@ -1,0 +1,10 @@
+{
+  "description": "Space before & in 2> &1 is a live syntax error (compact form is 2>&1)",
+  "parse": {
+    "expect_syntax_errors": true
+  },
+  "tags": [
+    "redirection",
+    "negative"
+  ]
+}

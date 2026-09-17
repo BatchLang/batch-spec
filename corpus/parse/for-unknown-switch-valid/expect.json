@@ -1,0 +1,10 @@
+{
+  "description": "Unknown FOR switch /b is a live syntax error (documented switches are /D /R /L /F)",
+  "parse": {
+    "expect_syntax_errors": true
+  },
+  "tags": [
+    "for",
+    "negative"
+  ]
+}

@@ -1,4 +1,4 @@
-version: 61
+version: 62
 
 # Percent-tilde (%~) expansion rules
 # Authoritative syntax: audit/cmd-help/call-help.txt (CALL /?)
@@ -470,6 +470,14 @@ for_forms:
     ("The syntax of the command is incorrect"). Spaced forms
     (for %%i in (a) do (echo x) / do echo x) are valid. Confirmed on live
     Windows 10/11 cmd; the grammar rejects the glued IN(/DO( forms.
+  unknown_switch: >-
+    Extension FOR switches are /D, /R, /L, and /F (FOR /?). Any other slash
+    letter is a live syntax error (for /b %%i in (a) do ... reports
+    "/b was unexpected at this time" and aborts; later statements do not run).
+    /D /R and /R /D are accepted directory-recursive combinations; mixing
+    unrelated documented letters such as /D /L is also a live syntax error.
+    The grammar accepts only the single-letter D/R/L/F switches. Confirmed on
+    live Windows 10/11 cmd.
 
 for_f:
   description: "FOR /F parsing options and input forms (FOR /?)"
@@ -1132,6 +1140,16 @@ set_assignment:
       so bat-vs-cmd clearing is best observed with IF ERRORLEVEL. Plain SET
       assignment still runs; SET /A and SET /P are not arithmetic/prompt forms
       when extensions are off (see command_extensions_off).
+    and_chain_stale_errorlevel: >-
+      Because successful SET / PATH / PROMPT in a .bat file leave the prior
+      ERRORLEVEL unchanged, a chain such as set foo=bar && next still runs next
+      (SET succeeded for chaining) while %ERRORLEVEL% can remain a stale
+      non-zero from before the SET. The same SET in a .cmd file clears
+      ERRORLEVEL to 0, so && and a later %ERRORLEVEL% test agree. Confirmed on
+      live Windows 10/11 cmd (cmd /c exit 5 then set foo=bar && echo AND:
+      .bat prints AND with ERRORLEVEL 5; .cmd prints AND with ERRORLEVEL 0).
+      Prefer an explicit IF / EXIT /B around those assignments in .bat files
+      rather than using && to mean "SET updated ERRORLEVEL".
   bare_set_lists_all: >-
     SET with no arguments lists the entire environment (SET /?). Dynamic
     names such as CD/DATE/TIME are omitted unless the user defined ordinary
@@ -1587,6 +1605,14 @@ errorlevel:
     compare-ops (see if_forms.compare_ops_notes), so treat multi-digit joins as
     a probe pattern rather than a portable ERRORLEVEL API. Confirmed on live
     Windows 10/11 cmd for the all-zero case.
+  errorlevel_zero: >-
+    Because IF ERRORLEVEL n means >= n, IF ERRORLEVEL 0 is true for every
+    non-negative exit code. Native cmd internals and typical external programs
+    use 0..255 (or other non-negative codes), so IF ERRORLEVEL 0 is an always-
+    true test after those commands. Confirmed on live Windows 10/11 cmd:
+    cmd /c exit 5 then IF ERRORLEVEL 0 still takes the then-body. IF NOT
+    ERRORLEVEL 0 is true only for a negative code (see not_errorlevel_negative).
+    Prefer IF %ERRORLEVEL% EQU 0 / NEQ 0 (extensions; unshadowed) for equality.
 
 cmdextversion:
   description: >-
@@ -1816,9 +1842,11 @@ if_forms:
     quoted compares such as IF "%var%"=="value" or IF DEFINED for presence
     tests. The grammar reports these as syntax errors to match live cmd.
   exist_spelling: >-
-    The file/directory test keyword is EXIST (IF /?), not EXISTS. A misspelled
-    IF EXISTS ... is a live syntax error (for example 'nul was unexpected at
-    this time'). The grammar rejects this form as a syntax error.
+    The file/directory test keyword is EXIST (IF /?), not EXISTS, EXIT, or
+    EXITS. Misspellings such as IF EXISTS / IF EXIT / IF EXITS are live syntax
+    errors (for example 'nul was unexpected at this time'). EXIT here is not
+    the EXIT command; it is an unrecognized IF predicate word. The grammar
+    rejects these forms as syntax errors. Confirmed on live Windows 10/11 cmd.
   operand_padding: >-
     Classic unquoted padding such as IF .%var%.==.value. can guard against
     empty expansion for simple values, but breaks when the expanded text
@@ -1909,6 +1937,18 @@ if_forms:
     IF /? documents /I for string compares, but live cmd also accepts /I before
     EXIST / DEFINED / ERRORLEVEL / CMDEXTVERSION with no behavioral change
     (if /i defined FOO matches if defined FOO). Confirmed on live Windows 10/11
+    cmd.
+  single_equals: >-
+    Classic string compare requires == (IF /?). A single = is not a compare-op:
+    if a=b echo x is a live syntax error ("=b was unexpected at this time").
+    Compare-ops (EQU/NEQ/...) remain available with extensions. The grammar
+    requires EQ ('==') or a compare-op token and rejects a lone EQUALS.
+    Confirmed on live Windows 10/11 cmd.
+  string_compare_no_glob: >-
+    IF string1==string2 and compare-ops compare the operand text literally;
+    * and ? are ordinary characters, not wildcards. if "foo*"=="foo1" is false
+    even when a file named foo1 exists. Filesystem globbing belongs on IF EXIST
+    / FOR sets (if exist *.cmd can be true). Confirmed on live Windows 10/11
     cmd.
 
 if_block_parentheses:
@@ -2418,9 +2458,13 @@ redirection:
   ampersand_in_handle_dup: >-
     In 2>&1 / 1>&2 / <&0 the ampersand is redirect handle-duplication syntax,
     not the & command separator. The digit after & is the source handle being
-    duplicated onto the left-hand handle. Do not insert spaces that would split
-    the operator (prefer 2>&1). This is distinct from statement chaining with a
-    lone & between commands (see command_chaining and
+    duplicated onto the left-hand handle. A space before & splits the operator
+    into a redirect plus a command separator: echo x 2> &1 is a live syntax
+    error ("& was unexpected at this time"). A space after & (2>& 1) still
+    duplicates on live Windows 10/11 cmd. 2>>&1 is append handle-duplication
+    (valid; stderr is appended onto handle 1, not written to a file named &1).
+    Prefer the compact 2>&1 / 1>&2 spelling. Distinct from statement chaining
+    with a lone & between commands (see command_chaining and
     per_statement_amp_redirect). Confirmed on live Windows 10/11 cmd.
   create_before_execute: >-
     An output redirect opens/creates (or truncates with >) the target before
@@ -2459,7 +2503,9 @@ redirection:
     bare_redirect_rejected. Use >file 2>&1 (or 1>file 2>&1) to merge streams.
   special_devices: >-
     NUL and CON are reliable redirect targets/sources on modern Windows (for
-    example >nul, >CON, <CON). CON as a redirect target/source is not the same
+    example >nul, >CON, <CON). An optional trailing colon is accepted on those
+    DOS device names (echo x>nul: / echo x>NUL: behaves like >nul and does not
+    create a file named NUL:). CON as a redirect target/source is not the same
     as IF EXIST con, which can block on console I/O (see
     if_forms.exist_special_devices). Other reserved device names such as PRN,
     AUX, COM1, and LPT1 may fail as redirect targets with "The system cannot

@@ -210,6 +210,13 @@ def _expandedPredicateOk(self) -> bool:
         BatchLexer.MINUS,
     )
 
+def _forSlashModOk(self, text: str) -> bool:
+    # Live cmd rejects unknown FOR switches (for /b ... -> "/b was unexpected
+    # at this time"). Documented extension switches are /D /R /L /F (FOR /?).
+    if not text:
+        return False
+    return len(text) == 1 and text.lower() in "drlf"
+
 def _forFOptionsOk(self, text: str) -> bool:
     # Structured FOR /F option-string validation aligned with live cmd syntax
     # rejects (eol= multi-char, skip= non-numeric/zero, malformed tokens=).
@@ -650,7 +657,7 @@ forPath
     ;
 
 forSlashMod
-    : SLASH WORD
+    : SLASH WORD {self._forSlashModOk($WORD.text)}?
     ;
 
 forFOptions

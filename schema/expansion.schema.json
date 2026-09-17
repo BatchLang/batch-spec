@@ -252,6 +252,10 @@
         "in_do_paren_spacing": {
           "type": "string",
           "minLength": 1
+        },
+        "unknown_switch": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "additionalProperties": false
@@ -716,6 +720,9 @@
             },
             "extensions_off": {
               "type": "string"
+            },
+            "and_chain_stale_errorlevel": {
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -1084,6 +1091,9 @@
         },
         "concatenated_digit_probe": {
           "type": "string"
+        },
+        "errorlevel_zero": {
+          "type": "string"
         }
       },
       "additionalProperties": false
@@ -1282,6 +1292,12 @@
           "type": "string"
         },
         "exist_trailing_backslash": {
+          "type": "string"
+        },
+        "single_equals": {
+          "type": "string"
+        },
+        "string_compare_no_glob": {
           "type": "string"
         }
       },

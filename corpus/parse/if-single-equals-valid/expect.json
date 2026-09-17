@@ -1,0 +1,10 @@
+{
+  "description": "Single equals in IF is a live syntax error (classic compare is ==)",
+  "parse": {
+    "expect_syntax_errors": true
+  },
+  "tags": [
+    "if",
+    "negative"
+  ]
+}

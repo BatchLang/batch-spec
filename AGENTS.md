@@ -92,7 +92,7 @@ Regenerate `generated/python/` from the grammar; never edit those files by hand.
 
 **Never**
 
-- Invent batveats without live cmd evidence reflected in the corpus and/or
+- Invent language facts without live cmd evidence reflected in the corpus and/or
   catalogs (`data/expansion.yaml`, `data/commands.yaml`)
 - Put Blinter linter rule codes in this repository
 - Treat a directory name containing `invalid` as implying

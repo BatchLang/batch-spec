@@ -52,14 +52,14 @@ Directory names containing `invalid` are not the same as
 sticky ERRORLEVEL, unknown external names, or a newline-detached ELSE that cmd
 treats as an unknown command rather than an IF syntax abort — see
 `else-newline-bare-invalid` / `else-unescaped-newline-invalid` and
-`detachedElseStmt`). Runtime batveats that still parse cleanly (for example the
-missing/empty substring batveat, or a UTF-8 BOM that prefixes the first token)
+`detachedElseStmt`). Runtime language facts that still parse cleanly (for example the
+missing/empty substring form, or a UTF-8 BOM that prefixes the first token)
 stay `should_parse: true` with guidance in
 [`data/expansion.yaml`](../data/expansion.yaml).
 
 Semantic rejection guidance (valid `%~` letters, SET /A rules, remarks, and
 related facts) lives in [`data/expansion.yaml`](../data/expansion.yaml). Parser
-acceptance does not imply catalog validity for purely semantic batveats.
+acceptance does not imply catalog validity for purely semantic language facts.
 
 **Structured SET /A and FOR /F options:** The ANTLR grammar parses `SET /A`
 expressions as a typed expression tree (`setAExpr` and related rules) and
@@ -83,7 +83,7 @@ wildcards, `skip=` physical-line counting, duplicate `tokens=` indexes, FOR /F
 ERRORLEVEL non-mutation, and input encoding. Expanded IF predicates such as
 `if %b%` / `if not %b%` (when `b` holds `a==a` / `true==true`) are accepted as
 `ifStmt` forms. Evaluation semantics (operator results, ERRORLEVEL codes,
-empty-field collapse, bare-name truncation, and similar batveats) remain in
+empty-field collapse, bare-name truncation, and similar language facts) remain in
 [`data/expansion.yaml`](../data/expansion.yaml). Unquoted `<<` and malformed
 `FOR /F` option values that live cmd rejects are marked with
 `expect_syntax_errors: true`. Other tool tails such as `START` remain largely
