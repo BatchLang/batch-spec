@@ -1,7 +1,7 @@
 # batch-spec
 
 Single source of truth for the Windows batch/cmd.exe **language** structure used by
-[Blinter](https://github.com/tboy1337/Blinter) and other conforming tools.
+[Blinter](https://github.com/BatchLang/Blinter) and other conforming tools.
 
 This repository defines grammar, expansion rules, and command catalogs. It does **not**
 define linter rules (E/W/S/SEC/P codes) -- those live in Blinter's `spec/` tree.
