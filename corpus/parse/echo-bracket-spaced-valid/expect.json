@@ -1,0 +1,10 @@
+{
+  "description": "Spaced brackets are argument tokens (glued echo[ stays a blank-line WORD)",
+  "parse": {
+    "should_parse": true,
+    "top_level_statement": "genericCmd"
+  },
+  "tags": [
+    "echo"
+  ]
+}

@@ -1222,6 +1222,7 @@ environment_variable_names:
     - "var@x"
     - "var#x"
     - "var$with.odd[chars]"
+    - "a{b}"
   lone_semicolon_name: >-
     A variable whose entire name is a single semicolon is accepted on live
     Windows 10/11 cmd (set ";=value" then %;% expands to value). Prefer clearer
@@ -1230,10 +1231,10 @@ environment_variable_names:
   tokenizer_note: >-
     The ANTLR lexer treats %name% as a single PERCENT_VAR for any name
     characters other than '%', '=', or newlines (matching live cmd's wide
-    charset, including spaces and punctuation such as @ # $ ; [ ]). Unquoted
+    charset, including spaces and punctuation such as @ # $ ; [ ] { }). Unquoted
     SET targets assemble the same punctuation from adjacent tokens
-    (setNamePart: letters/digits plus ~ @ # $ ; , ( ) * + ? . -) so forms
-    such as set a~b=1 and set var@x=3 stay one setStmt. Prefer
+    (setNamePart: letters/digits plus ~ @ # $ { } [ ] ; , ( ) * + ? . -) so forms
+    such as set a~b=1, set var@x=3, and set a{b}=1 stay one setStmt. Prefer
     underscore-alnum names for portable scripts.
   case_insensitive_names: >-
     Environment variable names are case-insensitive for lookup and assignment

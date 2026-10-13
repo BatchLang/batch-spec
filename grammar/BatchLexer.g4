@@ -68,6 +68,13 @@ AT             : '@' ;
 // tokens so they are not dropped as recognition errors outside %name%.
 HASH           : '#' ;
 DOLLAR         : '$' ;
+// Bare { } [ ] are ordinary cmd characters (echo payloads, SET names such as
+// a{b} / arr[1]). Distinct tokens, same as HASH / DOLLAR. Glued echo[ / echo]
+// stay one WORD via longest match because '[' / ']' are WORD continuations.
+LBRACE         : '{' ;
+RBRACE         : '}' ;
+LBRACK         : '[' ;
+RBRACK         : ']' ;
 
 // REM is a statement verb (not line-start-only). remStmt consumes through EOL.
 // Longer WORD forms such as REMCASE / remark win via longest match.
@@ -140,8 +147,11 @@ DQ_STRING
     : '"' (~'"' | '""')* '"'
     ;
 
+// Apostrophes are not cmd string delimiters and do not pair across lines.
+// A same-line pair is SQ_STRING; an odd quote is UNMATCHED_SQ through EOL.
+// Cross-line pairing would swallow later parentheses inside command groups.
 SQ_STRING
-    : '\'' (~'\'' | '\'\'')* '\''
+    : '\'' (~[\r\n'] | '\'\'')* '\''
     ;
 
 BACKTICK_STRING

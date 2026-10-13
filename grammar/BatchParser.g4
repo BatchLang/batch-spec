@@ -642,6 +642,10 @@ compareOperandPart
     | TILDE
     | HASH
     | DOLLAR
+    | LBRACE
+    | RBRACE
+    | LBRACK
+    | RBRACK
     | AT
     | CARET_ESCAPE
     ;
@@ -924,6 +928,10 @@ setANamePart
     | AT
     | HASH
     | DOLLAR
+    | LBRACE
+    | RBRACE
+    | LBRACK
+    | RBRACK
     | DOT
     ;
 
@@ -969,9 +977,10 @@ endlocalStmt
     ;
 
 // Unquoted SET names may include punctuation that the lexer emits as
-// separate tokens (~ @ # $ ; , ( ) * + ? . - and digits). Keep consuming
-// name parts until EQUALS / chain / newline so `set a~b=1` and `set var@x=3`
-// remain a single setStmt (live cmd; see expansion environment_variable_names).
+// separate tokens (~ @ # $ { } [ ] ; , ( ) * + ? . - and digits). Keep
+// consuming name parts until EQUALS / chain / newline so `set a~b=1`,
+// `set var@x=3`, and `set a{b}=1` remain a single setStmt (live cmd; see
+// expansion environment_variable_names).
 setTarget
     : setNamePart+
     | PERCENT_VAR
@@ -985,6 +994,10 @@ setNamePart
     | AT
     | HASH
     | DOLLAR
+    | LBRACE
+    | RBRACE
+    | LBRACK
+    | RBRACK
     | SEMICOLON
     | COMMA
     | DOT
@@ -1056,6 +1069,10 @@ token
     | AT
     | HASH
     | DOLLAR
+    | LBRACE
+    | RBRACE
+    | LBRACK
+    | RBRACK
     | CARET_ESCAPE
     | CARET
     | ASTERISK

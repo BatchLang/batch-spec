@@ -1,0 +1,11 @@
+{
+  "description": "Apostrophes do not pair across lines, so a later ) still closes the group",
+  "parse": {
+    "should_parse": true,
+    "top_level_statement": "groupStmt"
+  },
+  "tags": [
+    "group",
+    "quoting"
+  ]
+}

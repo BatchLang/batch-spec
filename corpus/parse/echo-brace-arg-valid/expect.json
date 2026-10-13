@@ -1,0 +1,12 @@
+{
+  "description": "Standalone braces inside a redirected command group are argument tokens",
+  "parse": {
+    "should_parse": true,
+    "top_level_statement": "groupStmt"
+  },
+  "tags": [
+    "echo",
+    "group",
+    "redirection"
+  ]
+}
