@@ -24,6 +24,7 @@ def test_build_steps_includes_all_defaults() -> None:
         "format",
         "imports",
         "lint",
+        "lint-tests",
         "types",
         "validate",
         "generate",
@@ -55,7 +56,7 @@ def test_parse_args_verbose_enables_debug_logging() -> None:
 
 def test_run_step_returns_subprocess_exit_code(monkeypatch: pytest.MonkeyPatch) -> None:
     mock_run = MagicMock(return_value=MagicMock(returncode=0))
-    monkeypatch.setattr(verify.subprocess, "run", mock_run)
+    monkeypatch.setattr("verify.subprocess.run", mock_run)
 
     assert verify._run_step("example", ["echo", "ok"]) == 0
     mock_run.assert_called_once()
@@ -65,7 +66,7 @@ def test_run_step_logs_failure(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     mock_run = MagicMock(return_value=MagicMock(returncode=2))
-    monkeypatch.setattr(verify.subprocess, "run", mock_run)
+    monkeypatch.setattr("verify.subprocess.run", mock_run)
 
     with caplog.at_level(logging.ERROR):
         assert verify._run_step("lint", ["pylint"]) == 2

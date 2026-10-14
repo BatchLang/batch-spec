@@ -191,7 +191,7 @@ def test_validate_json_rejects_invalid_json(
     monkeypatch.setattr(validate, "REPO_ROOT", tmp_path)
     bad = tmp_path / "bad.json"
     bad.write_text("{not json", encoding="utf-8")
-    schema = {"type": "object"}
+    schema: dict[str, object] = {"type": "object"}
 
     with pytest.raises(SystemExit, match="Invalid JSON"):
         validate._validate_json(bad, schema)
@@ -225,7 +225,7 @@ def test_check_utf8_c0_allows_listed_bom(
     path.parent.mkdir(parents=True)
     path.write_bytes(b"\xef\xbb\xbf@echo off\n")
     failures = validate._check_utf8_c0(path, allow_bom=True)
-    assert failures == []
+    assert not failures
 
 
 def test_validate_corpus_rejects_empty_parse_object(
@@ -390,7 +390,7 @@ def test_run_antlr_uses_relative_grammar_names(
     grammar_dir.mkdir()
     run_mock = MagicMock(return_value=MagicMock(returncode=0))
     monkeypatch.setattr(generate_parser, "GRAMMAR_DIR", grammar_dir)
-    monkeypatch.setattr(generate_parser.subprocess, "run", run_mock)
+    monkeypatch.setattr("generate_parser.subprocess.run", run_mock)
 
     generate_parser._run_antlr(tmp_path / "out")
 
@@ -542,8 +542,7 @@ def test_generate_parser_writes_stamp_and_init(
     monkeypatch.setattr(generate_parser, "GENERATED_DIR", generated_dir)
     monkeypatch.setattr(generate_parser, "GRAMMAR_DIR", grammar_dir)
     monkeypatch.setattr(
-        generate_parser.subprocess,
-        "run",
+        "generate_parser.subprocess.run",
         MagicMock(return_value=MagicMock(returncode=0)),
     )
 
@@ -574,8 +573,7 @@ def test_generate_parser_creates_missing_output_dir(
     monkeypatch.setattr(generate_parser, "GENERATED_DIR", generated_dir)
     monkeypatch.setattr(generate_parser, "GRAMMAR_DIR", grammar_dir)
     monkeypatch.setattr(
-        generate_parser.subprocess,
-        "run",
+        "generate_parser.subprocess.run",
         MagicMock(return_value=MagicMock(returncode=0)),
     )
 

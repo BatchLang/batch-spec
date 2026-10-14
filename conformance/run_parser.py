@@ -15,7 +15,9 @@ _SCRIPTS_DIR = Path(__file__).resolve().parent.parent / "scripts"
 if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
 
-from _paths import CORPUS_DIR, GENERATED_DIR  # noqa: E402
+# `as` marks an explicit re-export so mypy treats the name as part of this module.
+from _paths import CORPUS_DIR as CORPUS_DIR  # noqa: E402  # pylint: disable=useless-import-alias
+from _paths import GENERATED_DIR as GENERATED_DIR  # noqa: E402  # pylint: disable=useless-import-alias
 
 LOGGER = logging.getLogger(__name__)
 

@@ -19,7 +19,13 @@ from _paths import REPO_ROOT  # noqa: E402
 LOGGER = logging.getLogger(__name__)
 
 _PYTHON_TARGETS = ("scripts", "conformance", "tests")
-_VERIFY_TARGETS = ("scripts", "conformance")
+_LINT_TARGETS = ("scripts", "conformance")
+_TYPE_TARGETS = ("scripts", "conformance", "tests")
+# Tests call internal helpers and pytest fixture arguments by name.
+_TEST_LINT_DISABLE = (
+    "protected-access,duplicate-code,unused-argument,"
+    "use-implicit-booleaness-not-comparison,missing-class-docstring,unused-import"
+)
 
 
 def _build_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
@@ -30,10 +36,13 @@ def _build_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
         steps.append(("imports", ["isort", "--check-only", *_PYTHON_TARGETS]))
 
     if not args.skip_lint:
-        steps.append(("lint", ["pylint", *_VERIFY_TARGETS]))
+        steps.append(("lint", ["pylint", *_LINT_TARGETS]))
+        steps.append(
+            ("lint-tests", ["pylint", f"--disable={_TEST_LINT_DISABLE}", "tests"])
+        )
 
     if not args.skip_types:
-        steps.append(("types", ["mypy", *_VERIFY_TARGETS]))
+        steps.append(("types", ["mypy", *_TYPE_TARGETS]))
 
     steps.extend(
         [
