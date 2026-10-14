@@ -16,8 +16,11 @@ if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
 
 # `as` marks an explicit re-export so mypy treats the name as part of this module.
-from _paths import CORPUS_DIR as CORPUS_DIR  # noqa: E402  # pylint: disable=useless-import-alias
-from _paths import GENERATED_DIR as GENERATED_DIR  # noqa: E402  # pylint: disable=useless-import-alias
+# pylint: disable=useless-import-alias
+from _paths import CORPUS_DIR as CORPUS_DIR  # noqa: E402
+from _paths import GENERATED_DIR as GENERATED_DIR  # noqa: E402
+
+# pylint: enable=useless-import-alias
 
 LOGGER = logging.getLogger(__name__)
 
