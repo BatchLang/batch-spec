@@ -383,18 +383,93 @@ def test_normalize_generated_source_strips_absolute_paths(tmp_path: Path) -> Non
     ) == generate_parser._file_fingerprint(rel_path)
 
 
+def test_verified_antlr_jar_reuses_official_cache(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A cached jar with the official digest is not downloaded again."""
+    jar_path = tmp_path / "antlr4-4.13.2-complete.jar"
+    jar_path.write_bytes(b"cached")
+    monkeypatch.setattr(generate_parser.tempfile, "gettempdir", lambda: str(tmp_path))
+    monkeypatch.setattr(
+        generate_parser, "_jar_is_official", lambda payload: payload == b"cached"
+    )
+
+    def _unexpected_download() -> bytes:
+        raise AssertionError("download")
+
+    monkeypatch.setattr(generate_parser, "_download_antlr_jar", _unexpected_download)
+
+    assert generate_parser.verified_antlr_jar() == jar_path
+
+
+def test_verified_antlr_jar_stores_matching_download(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Matching bytes are written only after the digest check succeeds."""
+    monkeypatch.setattr(generate_parser.tempfile, "gettempdir", lambda: str(tmp_path))
+    monkeypatch.setattr(generate_parser, "_download_antlr_jar", lambda: b"official")
+    monkeypatch.setattr(
+        generate_parser, "_jar_is_official", lambda payload: payload == b"official"
+    )
+
+    stored = generate_parser.verified_antlr_jar()
+
+    assert stored.read_bytes() == b"official"
+
+
+def test_download_antlr_jar_reads_response(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The downloader returns the response body and does not run the jar."""
+
+    class _Response:
+        def read(self) -> bytes:
+            return b"payload"
+
+        def __enter__(self) -> "_Response":
+            return self
+
+        def __exit__(self, *_args: object) -> bool:
+            return False
+
+    monkeypatch.setattr(
+        generate_parser.urllib.request, "urlopen", lambda *_a, **_k: _Response()
+    )
+
+    assert generate_parser._download_antlr_jar() == b"payload"
+
+
+def test_jar_checksum_rejects_unofficial_bytes() -> None:
+    """A jar that is not the Maven Central artifact is not executed."""
+    assert generate_parser._jar_is_official(b"not-the-antlr-jar") is False
+
+
+def test_verified_antlr_jar_refuses_bad_download(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A checksum mismatch raises before the bytes are saved or run."""
+    monkeypatch.setattr(generate_parser.tempfile, "gettempdir", lambda: str(tmp_path))
+    monkeypatch.setattr(generate_parser, "_download_antlr_jar", lambda: b"bad-jar")
+
+    with pytest.raises(SystemExit, match="does not match"):
+        generate_parser.verified_antlr_jar()
+
+    assert list(tmp_path.iterdir()) == []
+
+
 def test_run_antlr_uses_relative_grammar_names(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     grammar_dir = tmp_path / "grammar"
     grammar_dir.mkdir()
     run_mock = MagicMock(return_value=MagicMock(returncode=0))
+    jar_path = tmp_path / "antlr4-complete.jar"
     monkeypatch.setattr(generate_parser, "GRAMMAR_DIR", grammar_dir)
+    monkeypatch.setattr(generate_parser, "verified_antlr_jar", lambda: jar_path)
     monkeypatch.setattr("generate_parser.subprocess.run", run_mock)
 
     generate_parser._run_antlr(tmp_path / "out")
 
     cmd = run_mock.call_args.args[0]
+    assert cmd[:3] == ["java", "-jar", str(jar_path)]
     assert cmd[-2:] == ["BatchLexer.g4", "BatchParser.g4"]
     assert run_mock.call_args.kwargs["cwd"] == grammar_dir
 
@@ -542,6 +617,9 @@ def test_generate_parser_writes_stamp_and_init(
     monkeypatch.setattr(generate_parser, "GENERATED_DIR", generated_dir)
     monkeypatch.setattr(generate_parser, "GRAMMAR_DIR", grammar_dir)
     monkeypatch.setattr(
+        generate_parser, "verified_antlr_jar", lambda: tmp_path / "antlr.jar"
+    )
+    monkeypatch.setattr(
         "generate_parser.subprocess.run",
         MagicMock(return_value=MagicMock(returncode=0)),
     )
@@ -572,6 +650,9 @@ def test_generate_parser_creates_missing_output_dir(
 
     monkeypatch.setattr(generate_parser, "GENERATED_DIR", generated_dir)
     monkeypatch.setattr(generate_parser, "GRAMMAR_DIR", grammar_dir)
+    monkeypatch.setattr(
+        generate_parser, "verified_antlr_jar", lambda: tmp_path / "antlr.jar"
+    )
     monkeypatch.setattr(
         "generate_parser.subprocess.run",
         MagicMock(return_value=MagicMock(returncode=0)),

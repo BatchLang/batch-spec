@@ -188,13 +188,32 @@ def _check_top_level_expectations(
     return None
 
 
+def read_corpus_lines(input_path: Path) -> list[str]:
+    """Split on LF and keep a CR that belongs to a CRLF pair.
+
+    ``str.splitlines()`` drops CR, so a caret that escapes the two-byte CRLF
+    is indistinguishable from a caret before LF. The CR stays on the line and
+    ``\\n``.join restores ``^\\r\\n`` for the lexer.
+    """
+    data = input_path.read_bytes()
+    if data.startswith(b"\xef\xbb\xbf"):
+        data = data[3:]
+    text = data.decode("utf-8")
+    parts = text.split("\n")
+    if parts and parts[-1] == "":
+        parts.pop()
+    if parts and parts[-1].endswith("\r"):
+        parts[-1] = parts[-1][:-1]
+    return parts
+
+
 def _check_case(
     case_id: str,
     input_path: Path,
     expect: dict[str, object],
     impl: Callable[[List[str]], tuple[object | None, list[str]]],
 ) -> str | None:
-    lines = input_path.read_text(encoding="utf-8").splitlines()
+    lines = read_corpus_lines(input_path)
     tree, errors = impl(lines)
     parse_meta = expect.get("parse", {})
     if not isinstance(parse_meta, dict):

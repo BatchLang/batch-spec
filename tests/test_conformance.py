@@ -34,6 +34,17 @@ def test_discover_cases_finds_repository_corpus() -> None:
         assert (expect_path.parent / "input.cmd").is_file()
 
 
+def test_read_corpus_lines_keeps_cr_in_crlf_continuation(tmp_path: Path) -> None:
+    """A caret before CRLF stays visible; splitlines() would have dropped the CR."""
+    path = tmp_path / "input.cmd"
+    path.write_bytes(b"@echo off\r\necho hello^\r\nworld\r\n")
+
+    lines = run_parser.read_corpus_lines(path)
+
+    assert lines == ["@echo off\r", "echo hello^\r", "world"]
+    assert "\n".join(lines) == "@echo off\r\necho hello^\r\nworld"
+
+
 def test_discover_cases_rejects_missing_input(
     tmp_corpus: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

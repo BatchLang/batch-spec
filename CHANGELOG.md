@@ -2,6 +2,14 @@
 
 All notable changes to batch-spec are documented in this file. Release tags follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- CI pins `actions/checkout` and `actions/setup-python` by commit, and the tag workflow grants `contents: write` only to the release job
+- `antlr4-python3-runtime` is pinned to 4.13.2. Parser generation runs `java -jar` only after the downloaded ANTLR complete jar matches the Maven Central digest
+- `corpus/**` is marked `-text`, and the conformance reader keeps CR from CRLF fixtures
+
 ## [0.72.1] - 2026-10-14
 
 ### Changed

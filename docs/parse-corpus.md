@@ -2,7 +2,7 @@
 
 Each fixture lives under `corpus/parse/<case-id>/` and must contain both:
 
-- `input.cmd` - UTF-8 batch source
+- `input.cmd` - UTF-8 batch source. Line endings are significant: the reader splits on LF and keeps a CR from a CRLF pair, so a caret that escapes the two-byte ending is still `^\r\n` when the lexer runs. Existing fixtures stay LF. Add a CRLF fixture only when the ending changes the parse.
 - `expect.json` - expectations validated by `schema/parse-expect.schema.json`
 
 `scripts/validate.py` fails if either file is missing for a case directory.

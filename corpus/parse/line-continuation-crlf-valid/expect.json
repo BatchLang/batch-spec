@@ -1,0 +1,10 @@
+{
+  "description": "A caret escapes the two-byte CRLF and continues onto the next line",
+  "parse": {
+    "should_parse": true,
+    "top_level_statement": "genericCmd"
+  },
+  "tags": [
+    "continuation"
+  ]
+}

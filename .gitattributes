@@ -19,9 +19,13 @@
 .gitattributes text eol=lf
 .gitignore text eol=lf
 
-# Batch corpus fixtures (stored as LF; parser joins lines with \n)
+# Default batch sources are LF. Corpus fixtures opt out below so a committed
+# CRLF oracle is not rewritten.
 *.cmd text eol=lf
 *.bat text eol=lf
+
+# Preserve exact corpus bytes, including CRLF line-ending oracles.
+corpus/** -text
 
 # GitHub Actions
 .github/** text eol=lf
