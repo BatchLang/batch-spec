@@ -389,7 +389,7 @@ def test_verified_antlr_jar_reuses_official_cache(
     """A cached jar with the official digest is not downloaded again."""
     jar_path = tmp_path / "antlr4-4.13.2-complete.jar"
     jar_path.write_bytes(b"cached")
-    monkeypatch.setattr(generate_parser.tempfile, "gettempdir", lambda: str(tmp_path))
+    monkeypatch.setattr(generate_parser, "_antlr_cache_path", lambda: jar_path)
     monkeypatch.setattr(
         generate_parser, "_jar_is_official", lambda payload: payload == b"cached"
     )
@@ -406,7 +406,8 @@ def test_verified_antlr_jar_stores_matching_download(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Matching bytes are written only after the digest check succeeds."""
-    monkeypatch.setattr(generate_parser.tempfile, "gettempdir", lambda: str(tmp_path))
+    jar_path = tmp_path / "antlr4-4.13.2-complete.jar"
+    monkeypatch.setattr(generate_parser, "_antlr_cache_path", lambda: jar_path)
     monkeypatch.setattr(generate_parser, "_download_antlr_jar", lambda: b"official")
     monkeypatch.setattr(
         generate_parser, "_jar_is_official", lambda payload: payload == b"official"
@@ -427,11 +428,11 @@ def test_download_antlr_jar_reads_response(monkeypatch: pytest.MonkeyPatch) -> N
         def __enter__(self) -> "_Response":
             return self
 
-        def __exit__(self, *_args: object) -> bool:
-            return False
+        def __exit__(self, *_args: object) -> None:
+            return None
 
     monkeypatch.setattr(
-        generate_parser.urllib.request, "urlopen", lambda *_a, **_k: _Response()
+        "generate_parser.urllib.request.urlopen", lambda *_a, **_k: _Response()
     )
 
     assert generate_parser._download_antlr_jar() == b"payload"
@@ -446,7 +447,8 @@ def test_verified_antlr_jar_refuses_bad_download(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """A checksum mismatch raises before the bytes are saved or run."""
-    monkeypatch.setattr(generate_parser.tempfile, "gettempdir", lambda: str(tmp_path))
+    jar_path = tmp_path / "antlr4-4.13.2-complete.jar"
+    monkeypatch.setattr(generate_parser, "_antlr_cache_path", lambda: jar_path)
     monkeypatch.setattr(generate_parser, "_download_antlr_jar", lambda: b"bad-jar")
 
     with pytest.raises(SystemExit, match="does not match"):

@@ -86,14 +86,21 @@ def _download_antlr_jar() -> bytes:
         headers={"User-Agent": "batch-spec-generate-parser"},
     )
     with urllib.request.urlopen(request, timeout=60) as response:
-        payload = response.read()
+        payload: object = response.read()
+    if not isinstance(payload, bytes):
+        raise SystemExit("ANTLR download did not return bytes")
     LOGGER.info("Downloaded ANTLR %s jar (%s bytes)", _ANTLR_VERSION, len(payload))
     return payload
 
 
+def _antlr_cache_path() -> Path:
+    """Return the temp path used for the verified ANTLR jar."""
+    return Path(tempfile.gettempdir()) / f"antlr4-{_ANTLR_VERSION}-complete.jar"
+
+
 def verified_antlr_jar() -> Path:
     """Return a cached jar only after its digest matches Maven Central."""
-    destination = Path(tempfile.gettempdir()) / f"antlr4-{_ANTLR_VERSION}-complete.jar"
+    destination = _antlr_cache_path()
     if destination.is_file() and _jar_is_official(destination.read_bytes()):
         LOGGER.info("Using cached ANTLR jar at %s", destination)
         return destination
