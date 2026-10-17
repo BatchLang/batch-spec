@@ -8,6 +8,7 @@ All notable changes to batch-spec are documented in this file. Release tags foll
 
 - Supported Python versions are 3.11, 3.12, 3.13, 3.14, and 3.15
 - The verification coverage gate is 90% on `scripts` and `conformance`
+- Pylint runs in one process so the Python 3.15 job does not depend on dill serializing code objects
 
 ## [0.72.2] - 2026-10-15
 
