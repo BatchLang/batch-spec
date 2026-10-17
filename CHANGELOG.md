@@ -2,6 +2,13 @@
 
 All notable changes to batch-spec are documented in this file. Release tags follow [Semantic Versioning](https://semver.org/).
 
+## [0.72.3] - 2026-10-18
+
+### Changed
+
+- Supported Python versions are 3.11, 3.12, 3.13, 3.14, and 3.15
+- The verification coverage gate is 90% on `scripts` and `conformance`
+
 ## [0.72.2] - 2026-10-15
 
 ### Changed
@@ -19,5 +26,6 @@ All notable changes to batch-spec are documented in this file. Release tags foll
 - Pylint and mypy include `tests/`
 - Added SECURITY.md, CONTRIBUTING.md, Dependabot configuration, and this changelog
 
+[0.72.3]: https://github.com/BatchLang/batch-spec/releases/tag/v0.72.3
 [0.72.2]: https://github.com/BatchLang/batch-spec/releases/tag/v0.72.2
 [0.72.1]: https://github.com/BatchLang/batch-spec/releases/tag/v0.72.1

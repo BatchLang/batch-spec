@@ -1,20 +1,20 @@
 [project]
 name = "batch-spec"
-version = "0.72.2"
+version = "0.72.3"
 description = "Single source of truth for Windows batch/cmd.exe language structure"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 license = "AGPL-3.0-or-later"
 readme = "README.md"
 
 [tool.black]
 line-length = 88
-target-version = ["py312", "py313", "py314"]
+target-version = ["py311", "py312", "py313", "py314", "py315"]
 include = '\.pyi?$'
 
 [tool.isort]
 profile = "black"
 line_length = 88
-py_version = 312
+py_version = 311
 src_paths = ["scripts", "conformance", "tests"]
 
 [tool.pip-audit]

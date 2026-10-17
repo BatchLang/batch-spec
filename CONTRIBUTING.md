@@ -16,7 +16,7 @@ Security issues must not be filed as public issues. See [SECURITY.md](SECURITY.m
 4. Run `python scripts/verify.py`.
 5. Open a pull request against `main`.
 
-Supported Python versions are 3.12, 3.13, and 3.14.
+Supported Python versions are 3.11, 3.12, 3.13, 3.14, and 3.15.
 
 ## Testing
 

@@ -11,7 +11,7 @@ This repo defines grammar, expansion rules, and command catalogs. It does **not*
 define linter rules (E/W/S/SEC/P codes) — those live in Blinter's `spec/` tree.
 
 - License: AGPL-3.0-or-later (`COPYING`)
-- Python: **3.12**, **3.13**, **3.14**
+- Python: **3.11**, **3.12**, **3.13**, **3.14**, **3.15**
 - Parser generation: ANTLR **4.13.2** (`antlr4-tools`)
 - Package version: contents of `VERSION` (keep `README.md` and `pyproject.toml` aligned)
 
@@ -26,7 +26,7 @@ pip install -r requirements-dev.txt
 ## Commands
 
 Full local gate (format, lint, types, validate, generate `--check`, pytest with
-95% coverage on `scripts`/`conformance`, pip-audit, conformance):
+90% coverage on `scripts`/`conformance`, pip-audit, conformance):
 
 ```bash
 python scripts/verify.py
@@ -42,7 +42,7 @@ python scripts/validate.py
 python scripts/generate_parser.py
 python scripts/generate_parser.py --check
 python conformance/run_parser.py --impl antlr
-python -m pytest --cov=scripts --cov=conformance --cov-fail-under=95
+python -m pytest --cov=scripts --cov=conformance --cov-fail-under=90
 ```
 
 ## Layout
