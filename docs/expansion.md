@@ -72,7 +72,7 @@ Primary reference text is captured under [`audit/cmd-help/`](../audit/cmd-help/)
 
 - **Quoting** - double quotes suppress `&|<>^()` for command parsing but do not suppress percent or delayed `!` expansion; embedded `""` pairs inside a quoted arg are retained after `%~` outer-quote strip (`"a""b"` -> `a""b`); only ASCII `"` (U+0022) quotes arguments — typographic curly quotes are ordinary characters
 
-- **Script encoding** - UTF-8 BOM prefixes the first token (breaking `@echo off`); UTF-16 BOM typically garbles the line worse; prefer BOM-less ASCII/code-page text; CRLF preferred, LF usually works
+- **Script encoding** - UTF-8 BOM prefixes the first token (breaking `@echo off`); UTF-16 BOM typically garbles the line worse; prefer BOM-less ASCII/code-page text; CRLF preferred, LF usually works; a CR that is not part of a CRLF pair is dropped and does not start a line, while `^` plus CRLF remains one escaped line ending
 
 - **Command resolution** - cwd then PATH with PATHEXT; bare missing external name sets ERRORLEVEL 9009; `CALL` of a missing external sets ERRORLEVEL 1; internals (ECHO/DIR/SET/…) are never shadowed by cwd files, but external tools (for example `where.exe` / `label.exe`) can be shadowed by a same-named `.bat`/`.cmd` in the CWD
 

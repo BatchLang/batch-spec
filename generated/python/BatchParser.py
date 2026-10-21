@@ -10,7 +10,7 @@ else:
 
 def serializedATN():
     return [
-        4,1,85,1104,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,
+        4,1,86,1104,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,
         7,6,2,7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,
         13,2,14,7,14,2,15,7,15,2,16,7,16,2,17,7,17,2,18,7,18,2,19,7,19,2,
         20,7,20,2,21,7,21,2,22,7,22,2,23,7,23,2,24,7,24,2,25,7,25,2,26,7,
@@ -444,8 +444,8 @@ def serializedATN():
         1096,5,47,0,0,1080,1096,5,48,0,0,1081,1096,5,49,0,0,1082,1096,5,
         44,0,0,1083,1096,5,45,0,0,1084,1096,5,43,0,0,1085,1096,5,40,0,0,
         1086,1096,5,42,0,0,1087,1096,5,41,0,0,1088,1096,5,77,0,0,1089,1096,
-        3,158,79,0,1090,1096,5,80,0,0,1091,1096,5,79,0,0,1092,1096,5,83,
-        0,0,1093,1096,5,84,0,0,1094,1096,5,85,0,0,1095,1042,1,0,0,0,1095,
+        3,158,79,0,1090,1096,5,80,0,0,1091,1096,5,79,0,0,1092,1096,5,84,
+        0,0,1093,1096,5,85,0,0,1094,1096,5,86,0,0,1095,1042,1,0,0,0,1095,
         1043,1,0,0,0,1095,1044,1,0,0,0,1095,1045,1,0,0,0,1095,1046,1,0,0,
         0,1095,1047,1,0,0,0,1095,1048,1,0,0,0,1095,1049,1,0,0,0,1095,1050,
         1,0,0,0,1095,1051,1,0,0,0,1095,1052,1,0,0,0,1095,1053,1,0,0,0,1095,
@@ -498,7 +498,8 @@ class BatchParser ( Parser ):
                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                      "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
                      "<INVALID>", "<INVALID>", "<INVALID>", "'!'", "'~'", 
-                     "'%'" ]
+                     "'%'", "<INVALID>", "<INVALID>", "<INVALID>", "<INVALID>", 
+                     "<INVALID>", "'\\r'" ]
 
     symbolicNames = [ "<INVALID>", "LINE_COMMENT", "LABEL", "AT", "HASH", 
                       "DOLLAR", "LBRACE", "RBRACE", "LBRACK", "RBRACK", 
@@ -515,8 +516,8 @@ class BatchParser ( Parser ):
                       "PERCENT_VAR_SUBSTRING", "PERCENT_VAR_REPLACE", "PERCENT_VAR", 
                       "PERCENT_ARG", "FOR_VAR_TILDE", "FOR_VAR", "BANG_VAR_SUBSTRING", 
                       "BANG_VAR_REPLACE", "BANG_VAR", "BANG", "TILDE", "PERCENT", 
-                      "WORD", "HEX_NUMBER", "NUMBER", "WS", "NEWLINE", "UNMATCHED_DQ", 
-                      "UNMATCHED_SQ", "UNMATCHED_BACKTICK" ]
+                      "WORD", "HEX_NUMBER", "NUMBER", "WS", "NEWLINE", "BARE_CR", 
+                      "UNMATCHED_DQ", "UNMATCHED_SQ", "UNMATCHED_BACKTICK" ]
 
     RULE_script = 0
     RULE_line = 1
@@ -705,9 +706,10 @@ class BatchParser ( Parser ):
     NUMBER=80
     WS=81
     NEWLINE=82
-    UNMATCHED_DQ=83
-    UNMATCHED_SQ=84
-    UNMATCHED_BACKTICK=85
+    BARE_CR=83
+    UNMATCHED_DQ=84
+    UNMATCHED_SQ=85
+    UNMATCHED_BACKTICK=86
 
     def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
         super().__init__(input, output)

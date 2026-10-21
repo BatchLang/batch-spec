@@ -1,0 +1,13 @@
+{
+  "description": "A bare CR does not end the line, so :: after it is not a line comment and & still chains",
+  "parse": {
+    "should_parse": true,
+    "top_level_statements": [
+      "genericCmd",
+      "genericCmd",
+      "genericCmd",
+      "genericCmd"
+    ]
+  },
+  "tags": ["line-endings"]
+}

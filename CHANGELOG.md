@@ -2,6 +2,12 @@
 
 All notable changes to batch-spec are documented in this file. Release tags follow [Semantic Versioning](https://semver.org/).
 
+## [0.72.4] - 2026-10-21
+
+### Fixed
+
+- A CR that is not the CR of a CRLF pair is not a line break. The lexer drops it, and a remark or label still runs to LF. `^` plus CRLF remains one escaped line ending
+
 ## [0.72.3] - 2026-10-18
 
 ### Changed
@@ -27,6 +33,7 @@ All notable changes to batch-spec are documented in this file. Release tags foll
 - Pylint and mypy include `tests/`
 - Added SECURITY.md, CONTRIBUTING.md, Dependabot configuration, and this changelog
 
+[0.72.4]: https://github.com/BatchLang/batch-spec/releases/tag/v0.72.4
 [0.72.3]: https://github.com/BatchLang/batch-spec/releases/tag/v0.72.3
 [0.72.2]: https://github.com/BatchLang/batch-spec/releases/tag/v0.72.2
 [0.72.1]: https://github.com/BatchLang/batch-spec/releases/tag/v0.72.1

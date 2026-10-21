@@ -56,12 +56,14 @@ fragment DIGIT : [0-9] ;
 // live as FOR letters: % | & = ; < >
 fragment FOR_VAR_LETTER : [a-zA-Z0-9?#$@_`[\]{}+.\-\\!*():/~] ;
 
-LINE_COMMENT   : {self._atLineStart()}? '::' ~[\r\n]* -> skip ;
+// A bare CR is not a line ending (cmd.exe drops it), so a remark runs to LF.
+LINE_COMMENT   : {self._atLineStart()}? '::' ~[\n]* -> skip ;
 
 // Live cmd: a label is a line beginning with ':' and the rest of the physical
 // line is the label text (spaces and most punctuation allowed). LINE_COMMENT
-// ('::...') is declared first and wins for double-colon remarks.
-LABEL          : {self._atLineStart()}? ':' ~[\r\n]+ ;
+// ('::...') is declared first and wins for double-colon remarks. A bare CR
+// does not end the label.
+LABEL          : {self._atLineStart()}? ':' ~[\n]+ ;
 
 AT             : '@' ;
 // Bare # / $ appear in args and SET names (live cmd). Keep as distinct
@@ -132,6 +134,9 @@ ASTERISK       : '*' ;
 // Distinct from FOR_VAR_LETTER '?' which only applies inside %%? forms.
 QUESTION       : '?' ;
 
+// '^' plus CRLF is one escaped ending. The CR is optional so LF-only
+// fixtures continue too. A CR that is not followed by LF is BARE_CR, not
+// this rule.
 LINE_CONTINUATION
     : '^' '\r'? '\n' -> skip
     ;
@@ -151,7 +156,7 @@ DQ_STRING
 // A same-line pair is SQ_STRING; an odd quote is UNMATCHED_SQ through EOL.
 // Cross-line pairing would swallow later parentheses inside command groups.
 SQ_STRING
-    : '\'' (~[\r\n'] | '\'\'')* '\''
+    : '\'' (~[\n'] | '\'\'')* '\''
     ;
 
 BACKTICK_STRING
@@ -271,16 +276,20 @@ HEX_NUMBER     : '0' [xX] [0-9a-fA-F]+ ;
 NUMBER         : DIGIT+ ;
 
 WS             : [ \t]+ -> skip ;
-NEWLINE        : [\r\n]+ ;
+// cmd.exe reads a physical line up to LF. The CR of a CRLF pair stays, so
+// '^' CRLF is still one escaped ending. One or more LF endings, each with
+// an optional CR, are one NEWLINE. A CR with no LF is not a NEWLINE.
+NEWLINE        : ('\r'? '\n')+ ;
+BARE_CR        : '\r' -> skip ;
 
 UNMATCHED_DQ
-    : '"' (~[\r\n"] | '""')*
+    : '"' (~[\n"] | '""')*
     ;
 
 UNMATCHED_SQ
-    : '\'' (~[\r\n'] | '\'\'')*
+    : '\'' (~[\n'] | '\'\'')*
     ;
 
 UNMATCHED_BACKTICK
-    : '`' (~[\r\n`] | '``')*
+    : '`' (~[\n`] | '``')*
     ;

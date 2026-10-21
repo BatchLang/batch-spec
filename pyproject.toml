@@ -1,6 +1,6 @@
 [project]
 name = "batch-spec"
-version = "0.72.3"
+version = "0.72.4"
 description = "Single source of truth for Windows batch/cmd.exe language structure"
 requires-python = ">=3.11"
 license = "AGPL-3.0-or-later"

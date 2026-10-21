@@ -45,6 +45,16 @@ def test_read_corpus_lines_keeps_cr_in_crlf_continuation(tmp_path: Path) -> None
     assert "\n".join(lines) == "@echo off\r\necho hello^\r\nworld"
 
 
+def test_read_corpus_lines_keeps_bare_cr_inside_the_line(tmp_path: Path) -> None:
+    """A CR that is not part of CRLF stays in the line so the lexer can drop it."""
+    path = tmp_path / "input.cmd"
+    path.write_bytes(b"@echo off\necho hello\rworld\n")
+
+    lines = run_parser.read_corpus_lines(path)
+
+    assert lines == ["@echo off", "echo hello\rworld"]
+
+
 def test_discover_cases_rejects_missing_input(
     tmp_corpus: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

@@ -2595,10 +2595,14 @@ script_encoding:
     BOM cannot be avoided.
   crlf_vs_lf: >-
     CRLF and LF line endings both work on modern Windows cmd for ordinary
-    scripts; prefer CRLF for maximum tool compatibility. The parse corpus may
-    include an LF-only smoke fixture; UTF-16-encoded input.cmd files are not
-    stored in the corpus because validators require UTF-8 decode (UTF-16 BOM
-    behavior remains catalog-only under bom_prefixes_first_token).
+    scripts; prefer CRLF for maximum tool compatibility. A CR that is not
+    immediately followed by LF is not a line ending: cmd.exe drops it, so it
+    does not start a line or end a remark. A caret at the end of a physical
+    line still escapes the two-byte CRLF (see caret_escape.line_continuation).
+    The parse corpus may include an LF-only smoke fixture; UTF-16-encoded
+    input.cmd files are not stored in the corpus because validators require
+    UTF-8 decode (UTF-16 BOM behavior remains catalog-only under
+    bom_prefixes_first_token).
 
 command_resolution:
   description: >-

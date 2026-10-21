@@ -1,0 +1,8 @@
+{
+  "description": "A CR that is not followed by LF does not start a new command",
+  "parse": {
+    "should_parse": true,
+    "top_level_statements": ["genericCmd", "genericCmd"]
+  },
+  "tags": ["line-endings"]
+}
