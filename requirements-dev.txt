@@ -1,5 +1,6 @@
 -r requirements.txt
 antlr4-tools
+antlr-v4-linter
 pytest
 pytest-cov
 pytest-timeout

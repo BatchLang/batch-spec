@@ -39,6 +39,26 @@ def _build_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
             [sys.executable, "-m", "yamllint", "--strict", "."],
         )
     )
+    # S003 flags lexer literals that overlap on purpose and resolve by rule
+    # order. N002 treats words inside embedded actions as lexer rules because
+    # the linter's grammar parser does not accept those actions.
+    steps.append(
+        (
+            "antlr-lint",
+            [
+                "antlr-lint",
+                "lint",
+                "--no-colors",
+                "--severity",
+                "error",
+                "--disable-rule",
+                "S003",
+                "--disable-rule",
+                "N002",
+                "grammar",
+            ],
+        )
+    )
 
     if not args.skip_types:
         steps.append(("types", ["mypy", *_TYPE_TARGETS]))
@@ -91,7 +111,20 @@ def _build_steps(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
 def _run_step(name: str, command: Sequence[str]) -> int:
     LOGGER.info("Starting step: %s", name)
     LOGGER.debug("Command: %s", " ".join(command))
-    result = subprocess.run(command, cwd=REPO_ROOT, check=False)
+    # antlr-lint writes its grammar parser's token errors to stderr. Findings
+    # and the process status are on stdout, so keep that noise out of the log.
+    capture_parser_diagnostics = name == "antlr-lint"
+    result = subprocess.run(
+        command,
+        cwd=REPO_ROOT,
+        check=False,
+        stderr=subprocess.PIPE if capture_parser_diagnostics else None,
+        text=capture_parser_diagnostics,
+        encoding="utf-8" if capture_parser_diagnostics else None,
+        errors="replace" if capture_parser_diagnostics else None,
+    )
+    if capture_parser_diagnostics and result.stderr:
+        LOGGER.debug("antlr-lint parser diagnostics:\n%s", result.stderr)
     if result.returncode == 0:
         LOGGER.info("Step passed: %s", name)
     else:

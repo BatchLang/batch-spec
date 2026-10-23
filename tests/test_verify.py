@@ -1,11 +1,13 @@
 """Tests for scripts/verify.py."""
 
 # Private helpers are the subject of these tests; the rcfile cannot scope that check.
-# pylint: disable=protected-access
+# The antlr-lint command is repeated so a change to the verify step fails the test.
+# pylint: disable=protected-access,duplicate-code
 
 from __future__ import annotations
 
 import logging
+import subprocess
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -28,6 +30,7 @@ def test_build_steps_includes_all_defaults() -> None:
         "imports",
         "lint",
         "yamllint",
+        "antlr-lint",
         "types",
         "validate",
         "generate",
@@ -49,6 +52,23 @@ def test_yamllint_checks_the_repository_root() -> None:
     ]
 
 
+def test_antlr_lint_checks_the_grammar_directory() -> None:
+    args = verify._parse_args([])
+    steps = dict(verify._build_steps(args))
+    assert steps["antlr-lint"] == [
+        "antlr-lint",
+        "lint",
+        "--no-colors",
+        "--severity",
+        "error",
+        "--disable-rule",
+        "S003",
+        "--disable-rule",
+        "N002",
+        "grammar",
+    ]
+
+
 def test_build_steps_honors_skip_flags() -> None:
     args = verify._parse_args(
         [
@@ -61,7 +81,7 @@ def test_build_steps_honors_skip_flags() -> None:
     )
     steps = verify._build_steps(args)
     names = [name for name, _ in steps]
-    assert names == ["yamllint", "validate", "generate", "test"]
+    assert names == ["yamllint", "antlr-lint", "validate", "generate", "test"]
 
 
 def test_parse_args_verbose_enables_debug_logging() -> None:
@@ -75,6 +95,31 @@ def test_run_step_returns_subprocess_exit_code(monkeypatch: pytest.MonkeyPatch) 
 
     assert verify._run_step("example", ["echo", "ok"]) == 0
     mock_run.assert_called_once()
+
+
+def test_run_step_hides_antlr_lint_parser_diagnostics(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    mock_run = MagicMock(return_value=MagicMock(returncode=0, stderr="token error"))
+    monkeypatch.setattr("verify.subprocess.run", mock_run)
+
+    with caplog.at_level(logging.DEBUG):
+        assert verify._run_step("antlr-lint", ["antlr-lint", "lint", "grammar"]) == 0
+
+    assert mock_run.call_args.kwargs["stderr"] is subprocess.PIPE
+    assert mock_run.call_args.kwargs["text"] is True
+    debug_messages = [
+        record.getMessage()
+        for record in caplog.records
+        if record.levelno == logging.DEBUG
+    ]
+    info_or_higher = [
+        record.getMessage()
+        for record in caplog.records
+        if record.levelno >= logging.INFO
+    ]
+    assert any("token error" in message for message in debug_messages)
+    assert all("token error" not in message for message in info_or_higher)
 
 
 def test_run_step_logs_failure(

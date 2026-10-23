@@ -39,7 +39,7 @@ Parser generation uses ANTLR **4.13.2** (`antlr4-tools`).
 
 Supported Python versions: **3.11**, **3.12**, **3.13**, **3.14**, and **3.15**.
 
-For linting (including yamllint on every YAML file), type checking, tests (>=90% coverage), pip-audit, and conformance:
+For linting (including yamllint on every YAML file and antlr-lint on `grammar/`), type checking, tests (>=90% coverage), pip-audit, and conformance:
 
 ```bash
 pip install -r requirements-dev.txt
