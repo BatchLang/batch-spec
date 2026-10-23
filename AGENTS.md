@@ -25,8 +25,8 @@ pip install -r requirements-dev.txt
 
 ## Commands
 
-Full local gate (format, lint, types, validate, generate `--check`, pytest with
-90% coverage on `scripts`/`conformance`, pip-audit, conformance):
+Full local gate (format, lint, yamllint, types, validate, generate `--check`,
+pytest with 90% coverage on `scripts`/`conformance`, pip-audit, conformance):
 
 ```bash
 python scripts/verify.py

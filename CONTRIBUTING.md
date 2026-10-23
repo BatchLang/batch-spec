@@ -20,7 +20,7 @@ Supported Python versions are 3.11, 3.12, 3.13, 3.14, and 3.15.
 
 ## Testing
 
-Tests live in `tests/` and are part of `scripts/verify.py`, including format, pylint, mypy, and pytest. Parser conformance lives in `conformance/` and `corpus/parse/`.
+Tests live in `tests/` and are part of `scripts/verify.py`, including format, pylint, yamllint, mypy, and pytest. Parser conformance lives in `conformance/` and `corpus/parse/`.
 
 ## License
 

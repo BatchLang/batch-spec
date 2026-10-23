@@ -1,5 +1,8 @@
 """Tests for conformance/run_parser.py."""
 
+# Private helpers are the subject of these tests; the rcfile cannot scope that check.
+# pylint: disable=protected-access
+
 from __future__ import annotations
 
 import json
@@ -256,28 +259,26 @@ def test_check_case_top_level_statements_rejects_non_strings(tmp_path: Path) -> 
 
 
 @pytest.mark.integration
-def test_top_level_statement_helpers_with_real_tree(
-    generated_parser: None,
-) -> None:
+@pytest.mark.usefixtures("generated_parser")
+def test_top_level_statement_helpers_with_real_tree() -> None:
     tree, errors = run_parser._parse_antlr(["if 1==1 echo yes"])
     assert tree is not None
-    assert errors == []
+    assert not errors
     assert run_parser._top_level_statement_name(tree) == "ifStmt"
     assert run_parser._top_level_statement_names(tree) == ["ifStmt"]
 
 
 @pytest.mark.integration
-def test_top_level_statements_rem_absorption_vs_glue(
-    generated_parser: None,
-) -> None:
+@pytest.mark.usefixtures("generated_parser")
+def test_top_level_statements_rem_absorption_vs_glue() -> None:
     absorbed, err_a = run_parser._parse_antlr(
         ["echo before&rem note & echo NO", "echo after"]
     )
     glued, err_g = run_parser._parse_antlr(
         ["echo before&rem) note & echo YES", "echo after"]
     )
-    assert absorbed is not None and err_a == []
-    assert glued is not None and err_g == []
+    assert absorbed is not None and not err_a
+    assert glued is not None and not err_g
     assert run_parser._top_level_statement_names(absorbed) == [
         "genericCmd",
         "remStmt",
@@ -292,20 +293,19 @@ def test_top_level_statements_rem_absorption_vs_glue(
 
 
 @pytest.mark.integration
-def test_top_level_ignores_nested_else_block_statements(
-    generated_parser: None,
-) -> None:
+@pytest.mark.usefixtures("generated_parser")
+def test_top_level_ignores_nested_else_block_statements() -> None:
     tree, errors = run_parser._parse_antlr(["IF 1==1 (echo yes) ELSE (echo no)"])
     assert tree is not None
-    assert errors == []
+    assert not errors
     assert run_parser._top_level_statement_name(tree) == "ifStmt"
     nested = run_parser._collect_command_line_statements(tree)
     assert len(nested) > 1
 
 
 @pytest.mark.integration
+@pytest.mark.usefixtures("generated_parser")
 def test_check_case_top_level_statement_mismatch_with_real_tree(
-    generated_parser: None,
     tmp_path: Path,
 ) -> None:
     input_path = tmp_path / "input.cmd"
@@ -324,8 +324,8 @@ def test_check_case_top_level_statement_mismatch_with_real_tree(
 
 
 @pytest.mark.integration
+@pytest.mark.usefixtures("generated_parser")
 def test_check_case_top_level_statement_passes_with_real_tree(
-    generated_parser: None,
     tmp_path: Path,
 ) -> None:
     input_path = tmp_path / "input.cmd"
@@ -350,10 +350,10 @@ def test_statement_rule_name_returns_none_for_empty_children() -> None:
 
 def test_statement_rule_name_skips_nested_statement_context() -> None:
     class StatementContext:
-        pass
+        """ANTLR StatementContext stand-in, which the helper skips."""
 
     class EchoStmtContext:
-        pass
+        """Stand-in whose class name resolves to the echoStmt rule."""
 
     class _NestedStatement:
         children: list[object] = [StatementContext(), EchoStmtContext()]
@@ -371,11 +371,11 @@ def test_statement_rule_name_returns_none_when_no_context_child() -> None:
 def test_collect_command_line_ignores_non_statement_children() -> None:
     cmd = type("CommandLineContext", (), {})()
     cmd.children = [object(), "token"]
-    assert run_parser._collect_command_line_statements(cmd) == []
+    assert not run_parser._collect_command_line_statements(cmd)
 
 
 def test_collect_top_level_statements_handles_non_tree() -> None:
-    assert run_parser._collect_top_level_statements(object()) == []
+    assert not run_parser._collect_top_level_statements(object())
 
 
 def test_collect_top_level_skips_non_command_line_children() -> None:
@@ -397,15 +397,16 @@ def test_collect_top_level_skips_non_command_line_children() -> None:
         },
     )()
 
-    assert run_parser._collect_top_level_statements(tree) == []
+    assert not run_parser._collect_top_level_statements(tree)
 
 
 @pytest.mark.integration
-def test_set_punct_name_stays_single_setstmt(generated_parser: None) -> None:
+@pytest.mark.usefixtures("generated_parser")
+def test_set_punct_name_stays_single_setstmt() -> None:
     """Unquoted SET names with ~ @ # $ must not mid-line-split into genericCmd."""
     tree, errors = run_parser._parse_antlr(["set a~b=1", "set var@x=3", "set n#1=h"])
     assert tree is not None
-    assert errors == []
+    assert not errors
     statements = run_parser._collect_top_level_statements(tree)
     assert len(statements) == 3
     assert all(
@@ -414,12 +415,13 @@ def test_set_punct_name_stays_single_setstmt(generated_parser: None) -> None:
 
 
 @pytest.mark.integration
-def test_hash_dollar_at_are_argument_tokens(generated_parser: None) -> None:
+@pytest.mark.usefixtures("generated_parser")
+def test_hash_dollar_at_are_argument_tokens() -> None:
     tree, errors = run_parser._parse_antlr(
         ["echo #alone", "echo $alone", "echo hello@there"]
     )
     assert tree is not None
-    assert errors == []
+    assert not errors
     statements = run_parser._collect_top_level_statements(tree)
     assert len(statements) == 3
     assert all(
@@ -428,23 +430,25 @@ def test_hash_dollar_at_are_argument_tokens(generated_parser: None) -> None:
 
 
 @pytest.mark.integration
-def test_parse_antlr_parses_simple_script(generated_parser: None) -> None:
+@pytest.mark.usefixtures("generated_parser")
+def test_parse_antlr_parses_simple_script() -> None:
     generated_dir = str(run_parser.GENERATED_DIR)
     if generated_dir in sys.path:
         sys.path.remove(generated_dir)
 
     tree, errors = run_parser._parse_antlr(["echo hello"])
     assert tree is not None
-    assert errors == []
+    assert not errors
     assert generated_dir in sys.path
 
     tree_again, errors_again = run_parser._parse_antlr(["echo bye"])
     assert tree_again is not None
-    assert errors_again == []
+    assert not errors_again
 
 
 @pytest.mark.integration
-def test_parse_antlr_captures_syntax_errors(generated_parser: None) -> None:
+@pytest.mark.usefixtures("generated_parser")
+def test_parse_antlr_captures_syntax_errors() -> None:
     _tree, errors = run_parser._parse_antlr(["if"])
     assert errors
     assert any("line " in error for error in errors)

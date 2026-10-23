@@ -1,5 +1,8 @@
 """Tests for scripts/verify.py."""
 
+# Private helpers are the subject of these tests; the rcfile cannot scope that check.
+# pylint: disable=protected-access
+
 from __future__ import annotations
 
 import logging
@@ -24,13 +27,25 @@ def test_build_steps_includes_all_defaults() -> None:
         "format",
         "imports",
         "lint",
-        "lint-tests",
+        "yamllint",
         "types",
         "validate",
         "generate",
         "test",
         "pip-audit",
         "conformance",
+    ]
+
+
+def test_yamllint_checks_the_repository_root() -> None:
+    args = verify._parse_args([])
+    steps = dict(verify._build_steps(args))
+    assert steps["yamllint"] == [
+        sys.executable,
+        "-m",
+        "yamllint",
+        "--strict",
+        ".",
     ]
 
 
@@ -46,7 +61,7 @@ def test_build_steps_honors_skip_flags() -> None:
     )
     steps = verify._build_steps(args)
     names = [name for name, _ in steps]
-    assert names == ["validate", "generate", "test"]
+    assert names == ["yamllint", "validate", "generate", "test"]
 
 
 def test_parse_args_verbose_enables_debug_logging() -> None:

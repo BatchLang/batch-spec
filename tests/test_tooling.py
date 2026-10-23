@@ -1,5 +1,8 @@
 """Tests for scripts/ tooling modules."""
 
+# Private helpers are the subject of these tests; the rcfile cannot scope that check.
+# pylint: disable=protected-access
+
 from __future__ import annotations
 
 import re
@@ -454,7 +457,7 @@ def test_verified_antlr_jar_refuses_bad_download(
     with pytest.raises(SystemExit, match="does not match"):
         generate_parser.verified_antlr_jar()
 
-    assert list(tmp_path.iterdir()) == []
+    assert not list(tmp_path.iterdir())
 
 
 def test_run_antlr_uses_relative_grammar_names(
@@ -497,13 +500,7 @@ def test_generate_parser_check_reports_stale_stamp(
 ) -> None:
     generated_dir = tmp_path / "generated" / "python"
     generated_dir.mkdir(parents=True)
-    for name in (
-        "BatchLexer.py",
-        "BatchParser.py",
-        "BatchParserVisitor.py",
-        "__init__.py",
-        ".grammar-stamp",
-    ):
+    for name in (*generate_parser._GENERATED_NAMES, generate_parser._STAMP_NAME):
         (generated_dir / name).write_text("placeholder", encoding="utf-8")
     (generated_dir / ".grammar-stamp").write_text("stale", encoding="utf-8")
 

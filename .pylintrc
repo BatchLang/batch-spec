@@ -1,6 +1,8 @@
 [MASTER]
 init-hook=import sys; from pathlib import Path; root = Path.cwd(); sys.path[:0] = [str(root / "scripts"), str(root / "conformance"), str(root / "generated" / "python")]
 py-version=3.11
+# The lint step fails unless pylint rates scripts, conformance, and tests 10/10.
+fail-under=10
 # Parallel mode pickles the linter with dill, which still reads code.co_lnotab.
 # Python 3.15 removed that attribute, so keep a single worker.
 jobs=1
