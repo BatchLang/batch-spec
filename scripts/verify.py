@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import subprocess
 import sys
 from collections.abc import Sequence
@@ -113,7 +114,14 @@ def _run_step(name: str, command: Sequence[str]) -> int:
     LOGGER.debug("Command: %s", " ".join(command))
     # antlr-lint writes its grammar parser's token errors to stderr. Findings
     # and the process status are on stdout, so keep that noise out of the log.
+    # The success line includes a check mark. On Windows before Python 3.15
+    # the console encoding cannot encode it, and the linter exits 1.
     capture_parser_diagnostics = name == "antlr-lint"
+    env = None
+    if capture_parser_diagnostics:
+        env = os.environ.copy()
+        env["PYTHONUTF8"] = "1"
+        env["PYTHONIOENCODING"] = "utf-8"
     result = subprocess.run(
         command,
         cwd=REPO_ROOT,
@@ -122,6 +130,7 @@ def _run_step(name: str, command: Sequence[str]) -> int:
         text=capture_parser_diagnostics,
         encoding="utf-8" if capture_parser_diagnostics else None,
         errors="replace" if capture_parser_diagnostics else None,
+        env=env,
     )
     if capture_parser_diagnostics and result.stderr:
         LOGGER.debug("antlr-lint parser diagnostics:\n%s", result.stderr)

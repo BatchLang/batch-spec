@@ -108,6 +108,8 @@ def test_run_step_hides_antlr_lint_parser_diagnostics(
 
     assert mock_run.call_args.kwargs["stderr"] is subprocess.PIPE
     assert mock_run.call_args.kwargs["text"] is True
+    assert mock_run.call_args.kwargs["env"]["PYTHONUTF8"] == "1"
+    assert mock_run.call_args.kwargs["env"]["PYTHONIOENCODING"] == "utf-8"
     debug_messages = [
         record.getMessage()
         for record in caplog.records
