@@ -19,7 +19,7 @@ All notable changes to batch-spec are documented in this file. Release tags foll
 - `generate_parser.py` publishes the ANTLR jar with an atomic replace and runs `java -jar` on a private copy of the verified bytes. A cache that cannot be read or written does not stop generation. Generation needs a JDK on `PATH`
 - `validate.py` prints each OK line once, on stdout
 - `conformance/run_parser.py --case` runs one corpus case
-- Tag releases run `scripts/release_notes.py` and publish that changelog section as the GitHub release notes
+- CI and tag releases both run from `.github/workflows/CI.yml`. A `v*` tag still waits for verification, and only that release job has `contents: write`. The notes come from `scripts/release_notes.py`
 
 ## [0.72.5] - 2026-11-05
 
