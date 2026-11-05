@@ -35,9 +35,8 @@ def _ensure_generated_parser() -> None:
         LOGGER.debug("Using committed generated parser at %s", GENERATED_DIR)
         return
 
-    antlr4 = shutil.which("antlr4")
-    if antlr4 is None:
-        pytest.skip("Generated parser missing and antlr4 CLI is unavailable")
+    if shutil.which("java") is None:
+        pytest.skip("Generated parser missing and java is unavailable")
 
     LOGGER.info("Generated parser missing; running scripts/generate_parser.py")
     result = subprocess.run(

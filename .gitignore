@@ -8,6 +8,7 @@ generated/python/*.tokens
 htmlcov/
 .coverage
 coverage.xml
+release-notes.md
 _tmp_audit/
 .tmp-audit/
 _audit_tmp/

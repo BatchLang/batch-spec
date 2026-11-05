@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import logging
+import os
 import shutil
 import subprocess
 import sys
@@ -94,26 +95,103 @@ def _download_antlr_jar() -> bytes:
 
 
 def _antlr_cache_path() -> Path:
-    """Return the temp path used for the verified ANTLR jar."""
-    return Path(tempfile.gettempdir()) / f"antlr4-{_ANTLR_VERSION}-complete.jar"
+    """Return the private cache path for the verified ANTLR jar."""
+    return (
+        Path(tempfile.gettempdir())
+        / "batch-spec-antlr-cache"
+        / f"antlr4-{_ANTLR_VERSION}-complete.jar"
+    )
+
+
+def _atomic_write(destination: Path, payload: bytes) -> None:
+    """Publish payload by rename so readers never see a partial jar."""
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    fd, name = tempfile.mkstemp(
+        prefix=f"{destination.name}.",
+        suffix=".tmp",
+        dir=destination.parent,
+    )
+    tmp_path = Path(name)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(payload)
+        os.replace(tmp_path, destination)
+    finally:
+        if tmp_path.exists():
+            tmp_path.unlink()
+
+
+def _private_jar_copy(payload: bytes) -> Path:
+    """Return a fresh file containing payload for this process to execute."""
+    directory = Path(tempfile.mkdtemp(prefix="batch-spec-antlr-"))
+    path = directory / f"antlr4-{_ANTLR_VERSION}-complete.jar"
+    path.write_bytes(payload)
+    return path
+
+
+def discard_private_jar(path: Path) -> None:
+    """Remove a jar directory created by ``_private_jar_copy``."""
+    parent = path.parent
+    if (
+        parent.name.startswith("batch-spec-antlr-")
+        and parent.name != "batch-spec-antlr-cache"
+    ):
+        shutil.rmtree(parent, ignore_errors=True)
+
+
+def _official_cached_bytes(destination: Path) -> bytes | None:
+    """Return cached bytes only when they match and can be read.
+
+    A missing or unreadable cache is a miss. The caller downloads again.
+    """
+    try:
+        payload = destination.read_bytes()
+    except OSError:
+        return None
+    if _jar_is_official(payload):
+        return payload
+    return None
+
+
+def _publish_cache(destination: Path, payload: bytes) -> None:
+    """Store a verified jar. A cache that cannot be updated is not fatal."""
+    try:
+        _atomic_write(destination, payload)
+    except OSError as exc:
+        LOGGER.warning("Cannot cache ANTLR jar at %s: %s", destination, exc)
+        return
+    try:
+        written = destination.read_bytes()
+    except OSError as exc:
+        LOGGER.warning("Cannot re-read ANTLR jar at %s: %s", destination, exc)
+        return
+    if not _jar_is_official(written):
+        LOGGER.warning("Cached ANTLR jar at %s failed the digest recheck", destination)
+        return
+    LOGGER.info("Cached verified ANTLR jar at %s", destination)
 
 
 def verified_antlr_jar() -> Path:
-    """Return a cached jar only after its digest matches Maven Central."""
+    """Return a private jar copy whose bytes match Maven Central.
+
+    The shared cache is published with ``os.replace`` after the digest check.
+    ``java -jar`` receives a separate file written from those verified bytes,
+    so a later replacement of the cache path is not what the JVM runs.
+    """
     destination = _antlr_cache_path()
-    if destination.is_file() and _jar_is_official(destination.read_bytes()):
+    payload = _official_cached_bytes(destination)
+    if payload is None:
+        payload = _download_antlr_jar()
+        if not _jar_is_official(payload):
+            raise SystemExit(
+                "Refusing to run ANTLR: downloaded jar does not match the "
+                "Maven Central SHA-1/SHA-256 for "
+                f"antlr4-{_ANTLR_VERSION}-complete.jar"
+            )
+        _publish_cache(destination, payload)
+    else:
         LOGGER.info("Using cached ANTLR jar at %s", destination)
-        return destination
-    payload = _download_antlr_jar()
-    if not _jar_is_official(payload):
-        raise SystemExit(
-            "Refusing to run ANTLR: downloaded jar does not match the "
-            "Maven Central SHA-1/SHA-256 for "
-            f"antlr4-{_ANTLR_VERSION}-complete.jar"
-        )
-    destination.write_bytes(payload)
-    LOGGER.info("Cached verified ANTLR jar at %s", destination)
-    return destination
+    return _private_jar_copy(payload)
 
 
 def _run_antlr(output_dir: Path) -> None:
@@ -132,7 +210,10 @@ def _run_antlr(output_dir: Path) -> None:
         *_GRAMMAR_FILES,
     ]
     LOGGER.info("Running verified ANTLR jar %s", jar_path)
-    _ = subprocess.run(cmd, check=True, cwd=GRAMMAR_DIR)
+    try:
+        _ = subprocess.run(cmd, check=True, cwd=GRAMMAR_DIR)
+    finally:
+        discard_private_jar(jar_path)
 
 
 def _write_init(output_dir: Path) -> None:
@@ -188,6 +269,7 @@ def _check_generated() -> None:
 
 
 def main() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     parser = argparse.ArgumentParser(description="Generate ANTLR Python parser")
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()

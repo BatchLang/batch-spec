@@ -397,13 +397,13 @@ builtin_overlap_deprecated_notes:
     Listed in cmd_internal_commands / builtin_commands and deprecated_commands:
     still a recognized cmd internal (legacy APPEND equivalent) but
     deprecated/undocumented for new scripts. The HELP utility does not list it
-    ("This command is not supported by the help utility. Try \"dpath /?\".");
+    ("This command is not supported by the help utility. Try "dpath /?".");
     use dpath /? (see audit/cmd-help/dpath-help.txt).
   keys: >-
     Listed in cmd_internal_commands / builtin_commands and deprecated_commands:
     still recognized as a DOS-compatibility internal but has no effect under
     modern Windows command-line editing. The HELP utility does not list it
-    ("Try \"keys /?\"."); use keys /? (see audit/cmd-help/keys-help.txt).
+    ("Try "keys /?"."); use keys /? (see audit/cmd-help/keys-help.txt).
   telnet: >-
     Listed in stock_windows_utilities / builtin_commands for detection, but the
     Telnet client is an optional Windows Feature / FoD component and is often

@@ -2,6 +2,25 @@
 
 All notable changes to batch-spec are documented in this file. Release tags follow [Semantic Versioning](https://semver.org/).
 
+## [0.72.6] - 2026-11-05
+
+### Fixed
+
+- Double quotes end at the physical line. An open quote does not swallow the next line or a later `)`
+- An IF compare operand ends at a space or tab, so `if a==b echo hi` keeps `echo` as the then-command
+- `FOR /F` option strings are recognized only after `/F`. A quoted `FOR /R` root such as `"D:\eol files"` is a path
+- A keyword immediately before `)` stays that keyword when the `)` closes a group that is already open. `(call)` is `callStmt`. `(if)` is a syntax error. `call)` is not `CALL`. An unclosed quote does not hide a `(` on a later line, and a caret-escaped parenthesis (`^(` / `^)`) does not change that group
+- The conformance reader keeps a leading UTF-8 BOM on the first line
+- The invalid `%~` letter regex does not match a FOR form such as `%%~qf`
+- Folded catalog notes store the quote and backslash characters they describe
+
+### Changed
+
+- `generate_parser.py` publishes the ANTLR jar with an atomic replace and runs `java -jar` on a private copy of the verified bytes. A cache that cannot be read or written does not stop generation. Generation needs a JDK on `PATH`
+- `validate.py` prints each OK line once, on stdout
+- `conformance/run_parser.py --case` runs one corpus case
+- Tag releases run `scripts/release_notes.py` and publish that changelog section as the GitHub release notes
+
 ## [0.72.5] - 2026-11-05
 
 ### Fixed
@@ -40,6 +59,7 @@ All notable changes to batch-spec are documented in this file. Release tags foll
 - Pylint and mypy include `tests/`
 - Added SECURITY.md, CONTRIBUTING.md, Dependabot configuration, and this changelog
 
+[0.72.6]: https://github.com/BatchLang/batch-spec/releases/tag/v0.72.6
 [0.72.5]: https://github.com/BatchLang/batch-spec/releases/tag/v0.72.5
 [0.72.4]: https://github.com/BatchLang/batch-spec/releases/tag/v0.72.4
 [0.72.3]: https://github.com/BatchLang/batch-spec/releases/tag/v0.72.3

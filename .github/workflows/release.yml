@@ -51,6 +51,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          python scripts/release_notes.py
           gh release create "${{ steps.version.outputs.tag }}" \
             --title "${{ steps.version.outputs.tag }}" \
-            --notes "batch-spec ${{ steps.version.outputs.version }} — pin this tag for production consumers. See README.md and docs/ for catalogs and corpus contract."
+            --notes-file release-notes.md

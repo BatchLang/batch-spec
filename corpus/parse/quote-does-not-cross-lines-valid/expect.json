@@ -1,0 +1,10 @@
+{
+  "description": "An unclosed double quote ends at LF, so the group closer and the following echo stay separate statements",
+  "parse": {
+    "should_parse": true,
+    "top_level_statements": ["groupStmt", "genericCmd", "genericCmd"]
+  },
+  "tags": [
+    "quoting"
+  ]
+}

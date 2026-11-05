@@ -378,6 +378,34 @@ def _setAForVarModulo(self, text: str) -> bool:
 
     return text == "%%-" or re.fullmatch(r"%%[0-9]+", text) is not None
 
+def _compareOperandContinues(self) -> bool:
+    # Whitespace is skipped, so stacked compare atoms (.%EMPTY%.==..) are
+    # adjacent tokens. A space or tab ends the operand: if a==b echo hi
+    # keeps echo as the then-command.
+    prev = self._input.LT(-1)
+    cur = self._input.LT(1)
+    if prev is None or cur is None:
+        return False
+    return not self._gapHasSpaceOrTab(prev, cur)
+
+def _forSwitchSeen(self, letter: str) -> bool:
+    # FOR /F options are not a FOR /R or FOR /D root path. Look only at the
+    # switches already matched for this FOR.
+    from BatchLexer import BatchLexer  # isort: skip
+
+    wanted = letter.lower()
+    look = -1
+    while look > -40:
+        token = self._input.LT(look)
+        if token is None or token.type == -1:
+            return False
+        if token.type in (BatchLexer.FOR, BatchLexer.NEWLINE):
+            return False
+        if token.type == BatchLexer.WORD and (token.text or "").lower() == wanted:
+            return True
+        look -= 1
+    return False
+
 def _gapHasSpaceOrTab(self, after_token, before_token) -> bool:
     # Lexer skips WS, so inspect the underlying char stream between tokens.
     start = after_token.stop + 1
@@ -615,7 +643,7 @@ compareOp
 // .%EMPTY%.==.. tokenize/parse (DOT + PERCENT_VAR + DOT). Exclude compareOp
 // tokens so `a EQU b` does not swallow the operator into the left operand.
 compareOperand
-    : compareOperandPart+
+    : compareOperandPart ( {self._compareOperandContinues()}? compareOperandPart )*
     ;
 
 compareOperandPart
@@ -651,7 +679,7 @@ compareOperandPart
     ;
 
 forStmt
-    : FOR forSlashMod* forFOptions? forPath? FOR_VAR IN
+    : FOR forSlashMod* ( {self._forSwitchSeen("f")}? forFOptions )? forPath? FOR_VAR IN
       {self._requireSpaceOrTabBefore()}? LPAREN forList RPAREN DO forBody
     ;
 

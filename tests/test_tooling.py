@@ -20,6 +20,7 @@ if str(SCRIPTS_DIR) not in sys.path:
 
 import _paths  # noqa: E402
 import generate_parser  # noqa: E402
+import release_notes  # noqa: E402
 import validate  # noqa: E402
 
 
@@ -74,6 +75,9 @@ def test_expansion_invalid_tilde_patterns_match_bad_forms() -> None:
         "%~ftza1",
         "%~dp0",
         "%~dp0log",
+        "%%~qf",
+        "echo %%~qf",
+        "%%~dp0",
     ):
         assert not any_match(
             spared_by_letter_regex
@@ -101,10 +105,48 @@ def test_validate_main_prints_success(capsys: pytest.CaptureFixture[str]) -> Non
     captured = capsys.readouterr()
     assert "batch-spec validation passed" in captured.out
     assert "OK VERSION sync" in captured.out
+    assert captured.out.count("OK commands.yaml") == 1
+    assert "OK commands.yaml" not in captured.err
 
 
 def test_validate_version_sync_accepts_repo() -> None:
     validate._validate_version_sync()
+
+
+def test_changelog_section_extracts_one_version() -> None:
+    changelog = (
+        "## [1.2.3] - 2026-01-01\n\n- note\n\n## [1.2.2] - 2025-12-01\n\n- old\n"
+    )
+
+    section = release_notes.changelog_section(changelog, "1.2.3")
+
+    assert section == "## [1.2.3] - 2026-01-01\n\n- note\n"
+
+
+def test_changelog_section_keeps_the_final_section() -> None:
+    changelog = "## [1.0.0] - 2026-01-01\n\n- only\n"
+
+    section = release_notes.changelog_section(changelog, "1.0.0")
+
+    assert section == "## [1.0.0] - 2026-01-01\n\n- only\n"
+
+
+def test_changelog_section_rejects_a_missing_version() -> None:
+    with pytest.raises(SystemExit, match="no section for 9.9.9"):
+        release_notes.changelog_section("# Changelog\n", "9.9.9")
+
+
+def test_write_release_notes_uses_the_repo_version(tmp_path: Path) -> None:
+    version = (_paths.REPO_ROOT / "VERSION").read_text(encoding="utf-8").strip()
+    output = tmp_path / "release-notes.md"
+
+    release_notes.write_release_notes(
+        _paths.REPO_ROOT / "VERSION",
+        _paths.REPO_ROOT / "CHANGELOG.md",
+        output,
+    )
+
+    assert output.read_text(encoding="utf-8").startswith(f"## [{version}]")
 
 
 def test_validate_version_sync_rejects_readme_mismatch(
@@ -402,7 +444,10 @@ def test_verified_antlr_jar_reuses_official_cache(
 
     monkeypatch.setattr(generate_parser, "_download_antlr_jar", _unexpected_download)
 
-    assert generate_parser.verified_antlr_jar() == jar_path
+    stored = generate_parser.verified_antlr_jar()
+    assert stored != jar_path
+    assert stored.read_bytes() == b"cached"
+    generate_parser.discard_private_jar(stored)
 
 
 def test_verified_antlr_jar_stores_matching_download(
@@ -418,7 +463,10 @@ def test_verified_antlr_jar_stores_matching_download(
 
     stored = generate_parser.verified_antlr_jar()
 
+    assert stored != jar_path
     assert stored.read_bytes() == b"official"
+    assert jar_path.read_bytes() == b"official"
+    generate_parser.discard_private_jar(stored)
 
 
 def test_download_antlr_jar_reads_response(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -444,6 +492,38 @@ def test_download_antlr_jar_reads_response(monkeypatch: pytest.MonkeyPatch) -> N
 def test_jar_checksum_rejects_unofficial_bytes() -> None:
     """A jar that is not the Maven Central artifact is not executed."""
     assert generate_parser._jar_is_official(b"not-the-antlr-jar") is False
+
+
+def test_official_cached_bytes_treats_unreadable_cache_as_miss(tmp_path: Path) -> None:
+    """A missing or unreadable cache is a miss, not a generation failure."""
+    blocked = tmp_path / "blocked"
+    blocked.mkdir()
+
+    assert generate_parser._official_cached_bytes(blocked) is None
+    assert generate_parser._official_cached_bytes(tmp_path / "absent.jar") is None
+
+
+def test_verified_antlr_jar_runs_when_cache_cannot_be_written(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A cache write error still runs the verified in-memory jar."""
+    jar_path = tmp_path / "antlr4-4.13.2-complete.jar"
+    monkeypatch.setattr(generate_parser, "_antlr_cache_path", lambda: jar_path)
+    monkeypatch.setattr(generate_parser, "_download_antlr_jar", lambda: b"official")
+    monkeypatch.setattr(
+        generate_parser, "_jar_is_official", lambda payload: payload == b"official"
+    )
+
+    def _unwritable(_destination: Path, _payload: bytes) -> None:
+        raise PermissionError("cache denied")
+
+    monkeypatch.setattr(generate_parser, "_atomic_write", _unwritable)
+
+    stored = generate_parser.verified_antlr_jar()
+
+    assert stored.read_bytes() == b"official"
+    assert not jar_path.exists()
+    generate_parser.discard_private_jar(stored)
 
 
 def test_verified_antlr_jar_refuses_bad_download(

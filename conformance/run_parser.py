@@ -193,11 +193,10 @@ def read_corpus_lines(input_path: Path) -> list[str]:
 
     ``str.splitlines()`` drops CR, so a caret that escapes the two-byte CRLF
     is indistinguishable from a caret before LF. The CR stays on the line and
-    ``\\n``.join restores ``^\\r\\n`` for the lexer.
+    ``\\n``.join restores ``^\\r\\n`` for the lexer. A leading UTF-8 BOM stays
+    in the first line so the lexer sees it as part of the first token.
     """
     data = input_path.read_bytes()
-    if data.startswith(b"\xef\xbb\xbf"):
-        data = data[3:]
     text = data.decode("utf-8")
     parts = text.split("\n")
     if parts and parts[-1] == "":
@@ -242,9 +241,25 @@ def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     parser = argparse.ArgumentParser(description="batch-spec parser conformance")
     parser.add_argument("--impl", default="antlr", choices=sorted(_IMPLEMENTATIONS))
+    parser.add_argument(
+        "--case",
+        action="append",
+        default=None,
+        help="Run only this corpus case id. Repeat for more than one case.",
+    )
     args = parser.parse_args()
     impl = _IMPLEMENTATIONS[args.impl]
     cases = _discover_cases()
+    if args.case:
+        wanted = set(args.case)
+        known = {case_id for case_id, _input_path, _expect in cases}
+        missing = sorted(wanted - known)
+        if missing:
+            for case_id in missing:
+                print(f"Unknown parse case: {case_id}", file=sys.stderr)
+                LOGGER.error("Unknown parse case: %s", case_id)
+            return 1
+        cases = [case for case in cases if case[0] in wanted]
     failures: list[str] = []
     for case_id, input_path, expect in cases:
         message = _check_case(case_id, input_path, expect, impl)
@@ -256,7 +271,6 @@ def main() -> int:
             LOGGER.error("%s", message)
         return 1
     print(f"All {len(cases)} parse cases passed ({args.impl})")
-    LOGGER.info("All %s parse cases passed (%s)", len(cases), args.impl)
     return 0
 
 

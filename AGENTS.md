@@ -12,7 +12,7 @@ define linter rules (E/W/S/SEC/P codes) — those live in Blinter's `spec/` tree
 
 - License: AGPL-3.0-or-later (`COPYING`)
 - Python: **3.11**, **3.12**, **3.13**, **3.14**, **3.15**
-- Parser generation: ANTLR **4.13.2** (`antlr4-tools`)
+- Parser generation: ANTLR **4.13.2** via `java -jar` (JDK on `PATH`; the jar is hash-checked)
 - Package version: contents of `VERSION` (keep `README.md` and `pyproject.toml` aligned)
 
 ## Setup
@@ -21,7 +21,8 @@ define linter rules (E/W/S/SEC/P codes) — those live in Blinter's `spec/` tree
 pip install -r requirements-dev.txt
 ```
 
-`requirements-dev.txt` includes `-r requirements.txt`.
+`requirements-dev.txt` includes `-r requirements.txt`. Parser generation and
+`python scripts/verify.py` need `java` on `PATH`.
 
 ## Commands
 

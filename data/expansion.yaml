@@ -27,12 +27,14 @@ invalid_combinations:
   - modifiers: "*"
     reason: "%~ modifiers may not be used with %* (CALL /?)"
   # Matches forms like %~q1 or %~dq1 where a letter is outside nxfpdstaz.
-  # Does not match %~1, %~dpnx0, %~DPNX0, %~*, or %~$PATH:1. Letter classes
-  # include both cases because modifiers are case-insensitive (FOR /?, CALL /?).
+  # Does not match %~1, %~dpnx0, %~DPNX0, %~*, %~$PATH:1, or a FOR metavar
+  # such as %%~qf (the lookbehind rejects a percent already before %~).
+  # Letter classes include both cases because modifiers are case-insensitive
+  # (FOR /?, CALL /?).
   # Note: %~* is still semantically invalid (see modifiers: "*" above); the
   # letter-regex simply does not catch the star form because * is an allowed
   # terminator.
-  - pattern: "%~[nxfpdstazNXFPDSTAZ]*[^0-9*$nxfpdstazNXFPDSTAZ]"
+  - pattern: '(?<!%)%~[nxfpdstazNXFPDSTAZ]*[^0-9*$nxfpdstazNXFPDSTAZ]'
     reason: >-
       Percent-tilde letter modifiers must be from nxfpdstaz (case-insensitive;
       CALL /?, FOR /?); the parameter must be 0-9, *, or a path-search $ENV: form
@@ -1844,7 +1846,7 @@ if_forms:
   exist_trailing_backslash: >-
     A trailing backslash on the EXIST operand is true for an existing directory
     and false for a normal file of the same path without the slash (both forms
-    without trailing \\ are true when the entry exists). Confirmed on live
+    without a trailing backslash are true when the entry exists). Confirmed on live
     Windows 10/11 cmd.
   empty_unquoted_operands: >-
     Unquoted empty IF operands cause a syntax error (for example IF == text or

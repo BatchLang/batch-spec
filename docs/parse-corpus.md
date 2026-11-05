@@ -22,7 +22,7 @@ for new fixtures.
 
 | Field | Meaning |
 |-------|---------|
-| should_parse | When true (or omitted with no error flags), require a clean parse tree and no syntax errors |
+| should_parse | When true, require a clean parse tree and no syntax errors. The schema requires this field or `expect_syntax_errors` |
 | should_parse: false | Pass only when the parse is not clean (errors and/or no usable tree) |
 | expect_syntax_errors | Pass only when the implementation reports syntax errors |
 | top_level_statement | Optional rule name of the **last script-level** statement (`ifStmt`, `forStmt`, `setStmt`, `genericCmd`, `detachedElseStmt`, ...). Nested statements inside IF/FOR/group blocks are ignored |

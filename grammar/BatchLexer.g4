@@ -10,20 +10,62 @@ def _atLineStart(self) -> bool:
     return prefix.strip() == ""
 
 def _keywordTrailerOk(self) -> bool:
-    # After matching the keyword text, reject glue to percent/bang/quotes
-    # and ')'. Live cmd: IF%1, SET%x%, FOR%%i, rem), if) become non-keywords
-    # (WORD + trailing punctuation). Bare rem( remains REM (trailer '(' ok).
+    # After matching the keyword text, reject glue to percent/bang/quotes.
+    # Live cmd: IF%1, SET%x%, FOR%%i, rem), if), and call) are not keywords.
+    # ')' closes a group when one is already open, so (call) and (set) stay
+    # keywords while a following ')' is RPAREN. Bare rem( remains REM.
     # Note: rem. / rem/ / rem: and peers often tokenize as WORD via longest
     # match (like echo.) but still invoke the REM builtin at runtime.
     la = self._input.LA(1)
+    if la == ord(")"):
+        return self._closesOpenGroup()
     return la not in (
         ord('%'),
         ord('!'),
         ord('"'),
         ord("'"),
         ord('`'),
-        ord(')'),
     )
+
+def _closesOpenGroup(self) -> bool:
+    # True when a ')' immediately after this keyword closes a '(' that is
+    # still open before the keyword. (call) is CALL. call) is not.
+    start = self._tokenStartCharIndex
+    if start <= 0:
+        return False
+    data = getattr(self._input, "strdata", None)
+    if isinstance(data, str):
+        return self._openParenDepth(data[:start]) > 0
+    return self._openParenDepth(self._input.getText(0, start - 1)) > 0
+
+def _openParenDepth(self, text: str) -> int:
+    depth = 0
+    index = 0
+    length = len(text)
+    while index < length:
+        char = text[index]
+        if char == '"':
+            # Same rule as DQ_STRING: a quote does not pair across LF.
+            end = index + 1
+            while end < length and text[end] not in '"\n':
+                end += 1
+            index = end + 1 if end < length and text[end] == '"' else end
+            continue
+        if char == "^":
+            # An odd caret escapes the next parenthesis (^) and ^( are literal).
+            # An even run (^^) does not, so the following ) still closes a group.
+            end = index
+            while end < length and text[end] == "^":
+                end += 1
+            escaped = (end - index) % 2 == 1 and end < length and text[end] in "()"
+            index = end + 1 if escaped else end
+            continue
+        if char == "(":
+            depth += 1
+        elif char == ")" and depth > 0:
+            depth -= 1
+        index += 1
+    return depth
 
 def _invalidPercentTildeAccept(self) -> bool:
     # Longest-match may prefer this rule over a shorter valid PERCENT_TILDE
@@ -70,11 +112,23 @@ def _remIsVerb(self) -> bool:
     return self._commandPositionAtEnd(self._prefixBeforeTokenStart())
 
 def _prefixBeforeTokenStart(self) -> str:
+    # The current physical line only. Copying the whole file here is quadratic
+    # because REM predicates call this at every candidate position.
     start = self._tokenStartCharIndex
     if start <= 0:
         return ""
-    prior = self._input.getText(0, start - 1)
-    return prior.split("\n")[-1]
+    cached = getattr(self, "_linePrefixCache", None)
+    if isinstance(cached, tuple) and len(cached) == 2 and cached[0] == start:
+        return str(cached[1])
+    data = getattr(self._input, "strdata", None)
+    if isinstance(data, str):
+        newline = data.rfind("\n", 0, start)
+        begin = 0 if newline < 0 else newline + 1
+        text = data[begin:start]
+    else:
+        text = self._input.getText(0, start - 1).split("\n")[-1]
+    self._linePrefixCache = (start, text)
+    return text
 
 def _remInlineParen(self) -> bool:
     # A '(' with only whitespace before the line ending starts a group that
@@ -384,8 +438,12 @@ CARET_ESCAPE
     : '^' ([&|<>()^!"%@,;=] | [ \t])
     ;
 
+// Double quotes do not pair across physical lines, and a caret inside an
+// open quote does not continue. A same-line pair is DQ_STRING. An unclosed
+// quote is UNMATCHED_DQ through LF (cmd prints the open quote and then runs
+// the next physical line as its own command).
 DQ_STRING
-    : '"' (~'"' | '""')* '"'
+    : '"' (~[\n"] | '""')* '"'
     ;
 
 // Apostrophes are not cmd string delimiters and do not pair across lines.

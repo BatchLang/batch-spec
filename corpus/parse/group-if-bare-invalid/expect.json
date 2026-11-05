@@ -1,0 +1,10 @@
+{
+  "description": "(if) is the IF keyword closed by the group, which live cmd rejects as a syntax error",
+  "parse": {
+    "expect_syntax_errors": true
+  },
+  "tags": [
+    "if",
+    "negative"
+  ]
+}

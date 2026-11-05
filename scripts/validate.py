@@ -56,7 +56,6 @@ def _validate_yaml(path: Path, schema_path: Path) -> None:
         raise SystemExit(f"Empty YAML document: {path}")
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
     jsonschema.validate(instance=data, schema=schema)
-    LOGGER.info("OK %s", path.name)
     print(f"OK {path.name}")
 
 
@@ -76,7 +75,6 @@ def _validate_json(path: Path, schema: dict[str, object]) -> None:
             f"Schema validation failed for {path.as_posix()}: {exc.message}"
         ) from exc
     rel = path.relative_to(REPO_ROOT)
-    LOGGER.info("OK %s", rel.as_posix())
     print(f"OK {rel.as_posix()}")
 
 
@@ -122,7 +120,6 @@ def _validate_docs_encoding() -> None:
         raise SystemExit(1)
     for path in sorted(DOCS_DIR.glob("*.md")):
         rel = path.relative_to(REPO_ROOT).as_posix()
-        LOGGER.info("OK %s", rel)
         print(f"OK {rel}")
 
 
@@ -210,12 +207,15 @@ def _validate_version_sync() -> None:
         raise SystemExit(
             f"VERSION ({version}) != README.md currently **{readme_version}**"
         )
-    LOGGER.info("OK VERSION sync (%s)", version)
     print(f"OK VERSION sync ({version})")
 
 
 def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(levelname)s %(message)s",
+        stream=sys.stderr,
+    )
     _validate_version_sync()
     _validate_yaml(COMMANDS_YAML, SCHEMA_DIR / "commands.schema.json")
     _validate_yaml(EXPANSION_YAML, SCHEMA_DIR / "expansion.schema.json")

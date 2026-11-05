@@ -48,6 +48,16 @@ def test_read_corpus_lines_keeps_cr_in_crlf_continuation(tmp_path: Path) -> None
     assert "\n".join(lines) == "@echo off\r\necho hello^\r\nworld"
 
 
+def test_read_corpus_lines_keeps_utf8_bom(tmp_path: Path) -> None:
+    """A leading BOM stays on the first line so the lexer can see it."""
+    path = tmp_path / "input.cmd"
+    path.write_bytes(b"\xef\xbb\xbf@echo off\n")
+
+    lines = run_parser.read_corpus_lines(path)
+
+    assert lines == ["\ufeff@echo off"]
+
+
 def test_read_corpus_lines_keeps_bare_cr_inside_the_line(tmp_path: Path) -> None:
     """A CR that is not part of CRLF stays in the line so the lexer can drop it."""
     path = tmp_path / "input.cmd"
@@ -268,6 +278,143 @@ def test_top_level_statement_helpers_with_real_tree() -> None:
     assert run_parser._top_level_statement_names(tree) == ["ifStmt"]
 
 
+def _context_names(node: object) -> list[str]:
+    names: list[str] = []
+    stack: list[object] = [node]
+    while stack:
+        current = stack.pop()
+        names.append(type(current).__name__)
+        get_count = getattr(current, "getChildCount", None)
+        get_child = getattr(current, "getChild", None)
+        if not callable(get_count) or not callable(get_child):
+            continue
+        count = get_count()
+        if not isinstance(count, int):
+            continue
+        for index in range(count):
+            stack.append(get_child(index))
+    return names
+
+
+def _compare_operand_text(tree: object) -> list[str]:
+    texts: list[str] = []
+    stack: list[object] = [tree]
+    while stack:
+        current = stack.pop()
+        if type(current).__name__ == "CompareOperandContext":
+            get_text = getattr(current, "getText", None)
+            texts.append(str(get_text()) if callable(get_text) else "")
+        get_count = getattr(current, "getChildCount", None)
+        get_child = getattr(current, "getChild", None)
+        if not callable(get_count) or not callable(get_child):
+            continue
+        count = get_count()
+        if not isinstance(count, int):
+            continue
+        for index in range(count - 1, -1, -1):
+            stack.append(get_child(index))
+    return texts
+
+
+@pytest.mark.integration
+@pytest.mark.usefixtures("generated_parser")
+def test_if_compare_operand_stops_before_then_command() -> None:
+    """A space ends an IF compare operand. The then-command stays a command."""
+    tree, errors = run_parser._parse_antlr(["if a==b echo hello world"])
+    quoted, quoted_errors = run_parser._parse_antlr(['if "%1"=="" echo usage'])
+    assert tree is not None and not errors
+    assert quoted is not None and not quoted_errors
+    assert _compare_operand_text(tree) == ["a", "b"]
+    assert _compare_operand_text(quoted) == ['"%1"', '""']
+
+
+@pytest.mark.integration
+@pytest.mark.usefixtures("generated_parser")
+def test_double_quote_does_not_swallow_the_next_line() -> None:
+    """An open quote ends at LF. The next physical line is its own command."""
+    tree, errors = run_parser._parse_antlr(
+        ["(", 'echo "hello', ")", 'echo "after"', "echo DONE"]
+    )
+    assert tree is not None and not errors
+    assert run_parser._top_level_statement_names(tree) == [
+        "groupStmt",
+        "genericCmd",
+        "genericCmd",
+    ]
+
+
+@pytest.mark.integration
+@pytest.mark.usefixtures("generated_parser")
+def test_for_r_quoted_path_is_not_for_f_options() -> None:
+    """A FOR /R root is a path even when it contains FOR /F option words."""
+    tree, errors = run_parser._parse_antlr(
+        ['for /r "D:\\eol files" %%f in (*.txt) do echo %%f']
+    )
+    tokens, token_errors = run_parser._parse_antlr(
+        ['for /r "C:\\tokens" %%f in (*.txt) do echo %%f']
+    )
+    options, option_errors = run_parser._parse_antlr(
+        ['for /f "tokens=1" %%f in (file.txt) do echo %%f']
+    )
+    bare, bare_errors = run_parser._parse_antlr(
+        ["for /f %%f in (file.txt) do echo %%f"]
+    )
+    assert tree is not None and not errors
+    assert tokens is not None and not token_errors
+    assert options is not None and not option_errors
+    assert bare is not None and not bare_errors
+    assert run_parser._top_level_statement_name(tree) == "forStmt"
+    assert run_parser._top_level_statement_name(options) == "forStmt"
+    assert run_parser._top_level_statement_name(bare) == "forStmt"
+
+
+@pytest.mark.integration
+@pytest.mark.usefixtures("generated_parser")
+def test_call_inside_group_is_call_statement() -> None:
+    """(call) is CALL. call) is not a keyword, and (if) is a syntax error."""
+    grouped, grouped_errors = run_parser._parse_antlr(["(call)"])
+    multiline, multiline_errors = run_parser._parse_antlr(["(", "call)"])
+    glued, glued_errors = run_parser._parse_antlr(["call)"])
+    bare_if, bare_if_errors = run_parser._parse_antlr(["(if)"])
+    assert grouped is not None and not grouped_errors
+    assert multiline is not None and not multiline_errors
+    unclosed, unclosed_errors = run_parser._parse_antlr(
+        ['echo "a', "(", 'echo "b', "call)"]
+    )
+    assert "CallStmtContext" in _context_names(grouped)
+    assert "CallStmtContext" in _context_names(multiline)
+    assert unclosed is not None and not unclosed_errors
+    assert "CallStmtContext" in _context_names(unclosed)
+    assert glued_errors
+    assert "CallStmtContext" not in _context_names(glued)
+    assert bare_if is not None and bare_if_errors
+
+
+@pytest.mark.integration
+@pytest.mark.usefixtures("generated_parser")
+def test_escaped_paren_does_not_change_group_depth() -> None:
+    """A caret escapes one parenthesis. ^^) is a real closer. ^( is not an opener."""
+    kept, kept_errors = run_parser._parse_antlr(["(", "echo ^)", "call)"])
+    opened, opened_errors = run_parser._parse_antlr(["echo ^(", "call)"])
+    closed, closed_errors = run_parser._parse_antlr(["(", "echo ^^)", "call)"])
+    assert kept is not None and not kept_errors
+    assert "CallStmtContext" in _context_names(kept)
+    assert opened is not None and opened_errors
+    assert "CallStmtContext" not in _context_names(opened)
+    assert closed is not None and closed_errors
+    assert "CallStmtContext" not in _context_names(closed)
+
+
+@pytest.mark.integration
+@pytest.mark.usefixtures("generated_parser")
+def test_parse_keeps_utf8_bom_on_the_first_token() -> None:
+    tree, errors = run_parser._parse_antlr(["\ufeff@echo off"])
+    assert tree is not None and not errors
+    get_text = getattr(tree, "getText", None)
+    assert callable(get_text)
+    assert "\ufeff" in str(get_text())
+
+
 @pytest.mark.integration
 @pytest.mark.usefixtures("generated_parser")
 def test_top_level_statements_rem_absorption_vs_glue() -> None:
@@ -452,6 +599,41 @@ def test_parse_antlr_captures_syntax_errors() -> None:
     _tree, errors = run_parser._parse_antlr(["if"])
     assert errors
     assert any("line " in error for error in errors)
+
+
+def test_main_runs_only_the_named_case(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    sample_cases = [
+        ("one", Path("a.cmd"), {"parse": {"should_parse": True}}),
+        ("two", Path("b.cmd"), {"parse": {"should_parse": True}}),
+    ]
+    seen: list[str] = []
+
+    def check(case_id: str, *_args: object, **_kwargs: object) -> None:
+        seen.append(case_id)
+
+    monkeypatch.setattr(run_parser, "_discover_cases", lambda: sample_cases)
+    monkeypatch.setattr(run_parser, "_check_case", check)
+    monkeypatch.setattr(
+        sys, "argv", ["run_parser.py", "--impl", "antlr", "--case", "two"]
+    )
+
+    assert run_parser.main() == 0
+    assert seen == ["two"]
+    assert "All 1 parse cases passed" in capsys.readouterr().out
+
+
+def test_main_rejects_an_unknown_case(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(run_parser, "_discover_cases", lambda: [])
+    monkeypatch.setattr(
+        sys, "argv", ["run_parser.py", "--impl", "antlr", "--case", "missing"]
+    )
+
+    assert run_parser.main() == 1
+    assert "Unknown parse case: missing" in capsys.readouterr().err
 
 
 def test_main_returns_zero_when_all_cases_pass(monkeypatch: pytest.MonkeyPatch) -> None:

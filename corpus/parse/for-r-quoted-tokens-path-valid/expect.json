@@ -1,0 +1,11 @@
+{
+  "description": "FOR /R quoted root containing the FOR /F word tokens is a path, not an option string",
+  "parse": {
+    "should_parse": true,
+    "top_level_statement": "forStmt"
+  },
+  "tags": [
+    "for",
+    "quoting"
+  ]
+}

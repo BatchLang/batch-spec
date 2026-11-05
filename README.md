@@ -22,18 +22,18 @@ define linter rules (E/W/S/SEC/P codes) -- those live in Blinter's `spec/` tree.
 
 ## Versioning
 
-The package version is the contents of [`VERSION`](VERSION) (currently **0.72.5**). Releases are tagged `vMAJOR.MINOR.PATCH` matching that file. Pin a published tag (v0.68.0 and later) via git submodule or lock file. Do not depend on `main` in production CI.
+The package version is the contents of [`VERSION`](VERSION) (currently **0.72.6**). Releases are tagged `vMAJOR.MINOR.PATCH` matching that file. Pin a published tag (v0.68.0 and later) via git submodule or lock file. Do not depend on `main` in production CI.
 
 ## Validate
 
 ```bash
 pip install -r requirements.txt
 python scripts/validate.py
-python scripts/generate_parser.py
+python scripts/generate_parser.py --check
 python conformance/run_parser.py --impl antlr
 ```
 
-Parser generation uses ANTLR **4.13.2** (`antlr4-tools`).
+`python scripts/generate_parser.py` rewrites `generated/python/`. `--check` compares the committed parser to a fresh ANTLR run and does not write it. Both commands need `java` on `PATH`. The script downloads the ANTLR **4.13.2** complete jar from Maven Central and runs it only after the SHA-1 and SHA-256 match the published artifact. `conformance/run_parser.py --case <id>` checks one corpus case.
 
 ## Local verification
 
