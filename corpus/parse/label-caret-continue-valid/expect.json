@@ -1,0 +1,15 @@
+{
+  "description": "An odd caret at the end of a label joins the next physical line into the label",
+  "parse": {
+    "should_parse": true,
+    "top_level_statements": [
+      "genericCmd",
+      "genericCmd",
+      "genericCmd"
+    ]
+  },
+  "tags": [
+    "label",
+    "continuation"
+  ]
+}

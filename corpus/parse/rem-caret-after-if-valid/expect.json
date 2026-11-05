@@ -1,0 +1,16 @@
+{
+  "description": "REM after an IF condition does not continue across a trailing caret",
+  "parse": {
+    "should_parse": true,
+    "top_level_statements": [
+      "genericCmd",
+      "ifStmt",
+      "genericCmd"
+    ]
+  },
+  "tags": [
+    "remarks",
+    "continuation",
+    "if"
+  ]
+}

@@ -755,11 +755,20 @@ caret_escape:
     line (the CRLF is escaped). CRLF is two bytes escaped by that single
     trailing caret (the unusual case where one ^ spans a two-byte sequence). A
     trailing space after ^ escapes the space instead, so the next line is not a
-    continuation. Percent expansion runs on each physical line before
+    continuation. An even number of trailing carets does not continue (^^ is a
+    literal caret). Percent expansion runs on each physical line before
     continuation joins the next line, so a name cannot span the break: echo
     %NA^ / ME% does not form %NAME% (live cmd typically leaves incomplete-%
-    stripping such as NAME). Keep %name% on one physical line. Confirmed on
-    live Windows 10/11 cmd.
+    stripping such as NAME). Keep %name% on one physical line. A caret inside
+    a REM remark does not continue, because REM consumes the rest of that
+    physical line first: rem note ^, echo hi & rem note ^, if 1==1 rem note ^,
+    and for %%i in (1) do rem note ^ all run the next line. The letters rem
+    used as data still continue (if exist rem note ^ joins the next line,
+    because that rem is the EXIST operand, not the remark verb). A label line or a
+    :: remark that ends in an odd caret does continue, and every joined
+    physical line is part of that label or remark rather than a later command
+    (:lab ^ then echo swallowed leaves the echo unrun; the same for ::).
+    Confirmed on live Windows 10/11 cmd.
   percent_not_escaped: >-
     Caret does not escape percent. Percent expansion runs before caret-escape
     processing, so ^%name% still expands %name% (use %% in scripts for a
@@ -2271,8 +2280,9 @@ call_goto:
     Inside CALL :label or a CALLed script, a missing GOTO ends that CALLed
     context and returns to the caller with ERRORLEVEL 1 (the caller continues).
     goto lab does not match a distinct longer label such as :label (that
-    folklore is false on live Windows 10/11 cmd); see label_call_vs_goto_spaces
-    for the real prefix rule on spaced label lines.
+    folklore is false on live Windows 10/11 cmd). The lookup key ends at the
+    first delimiter in label_charset, so goto :has other is the same search as
+    goto :has. See label_call_vs_goto_spaces.
   goto_empty_target: >-
     Bare GOTO with no target prints "No batch label specified to GOTO command."
     and ends the current batch context (top-level scripts stop; inside CALL
@@ -2280,30 +2290,40 @@ call_goto:
     from a missing named label message ("The system cannot find the batch label
     specified - name"). Confirmed on live Windows 10/11 cmd.
   label_first_match: >-
-    When the same label text appears more than once, GOTO and CALL :label
-    resolve to the first matching label in file order; later duplicates are
-    ignored (confirmed: goto mid hits the first :mid and never the second).
-    Prefer unique labels.
+    When the same label key appears more than once, GOTO and CALL :label
+    resolve to the first match in file order; later duplicates are ignored
+    (confirmed: goto mid hits the first :mid and never the second). Lines whose
+    text differs after a key delimiter are still the same key: :ok:extra and
+    :ok:other are both ok, and the earlier line wins. Prefer unique labels.
   label_line_form: >-
     A label is a line beginning with a colon (GOTO /?). Indented labels are
     accepted by cmd; prefer a colon in column 0 for portable scripts.
   label_charset: >-
-    User label names may include letters, digits, dots, spaces, and many
-    punctuation characters after the leading colon (for example :ok.label and
-    :has space). A label line consumes the rest of the physical line after the
-    leading colon (GOTO /?). A second colon immediately after the first (::) is
-    the label-style remark form, not a normal jump target. Additional colons
-    after the second character are allowed on real jump labels (for example
-    :ok:extra matches goto :ok:extra). Prefer simple alphanumeric labels for
-    portable scripts; avoid ')' inside labels used within parenthesized blocks
-    (see remarks.double_colon). The ANTLR LABEL token matches ':' plus the
-    remainder of the line (excluding the newline).
+    A label line consumes the rest of the physical line after the leading
+    colon (GOTO /?). The ANTLR LABEL token is that whole line, including text
+    after the lookup key. The key itself ends at the first space, tab, +,
+    colon, ampersand, pipe, or angle bracket. :start rem entry is the key
+    start. :ok:extra and :ok are the same key ok, so goto :ok:extra hits
+    whichever :ok line comes first. :plus+more is the key plus. Dot, comma,
+    semicolon, equals, and parentheses stay in the key: goto eq does not find
+    :eq=more, goto ok.other does not find :ok.extra, and goto paren does not
+    find :paren(more). & | < > end the key, so goto lab finds :lab&more.
+    :: is the remark form, not a jump target. Prefer simple alphanumeric
+    labels. A caret at the end of the label line continues into the next
+    physical lines (see caret_escape.line_continuation). Confirmed on live
+    Windows 10/11 cmd.
   label_call_vs_goto_spaces: >-
     CALL :label arguments treats the first token after the colon as the label
-    name and subsequent tokens as routine arguments (CALL /?). GOTO label uses
-    the remainder of the statement as the target text, so goto :has space can
-    target a line ":has space". Label lookup is prefix-oriented: goto :has also
-    matches a line beginning with ":has " (live cmd).
+    and the rest as arguments (CALL /?). That token and a GOTO target are then
+    cut to the label key. Command delimiters (space, tab, comma, semicolon,
+    equals) end the token, so goto :has other and goto comma,more both search
+    for the key before that delimiter. Plus, colon, ampersand, pipe, and angle
+    brackets end the key even when they are not ordinary separators: goto
+    plus+zzz and call :plus+zzz search for plus, and call :ok:extra searches
+    for ok. goto :has other therefore hits the first :has line, including
+    :has space, and does not prefer a line whose trailing text is "other".
+    goto lab still does not match a longer key such as :label. Confirmed on
+    live Windows 10/11 cmd.
   label_fallthrough: >-
     A label line is not a control-flow barrier. Execution falls through into
     following statements unless a GOTO/EXIT (or similar) jumps away. After
@@ -2357,7 +2377,8 @@ remarks:
     command verb -- at line start or after statement separators (&, &&, ||).
     Trailing `& command`, pipes, and redirection on that same REM line do not
     execute (for example echo before&rem note & echo after prints only
-    "before"). Glued forms such as REMCASE are not the REM command (longest
+    "before"). A caret in that remark does not continue the line. Glued forms
+    such as REMCASE are not the REM command (longest
     token match treats them as ordinary names). Mid-token letters "rem" inside
     other commands remain ordinary text. Prefer a separate command line for
     real redirects and chained commands after a remark.
@@ -2380,9 +2401,11 @@ remarks:
   double_colon: >-
     A line starting with :: is a label whose second character is :, commonly
     used as a remark. Real jump targets must not place : in the second
-    character position (that form is the label-style remark). Additional colons
-    later in the label text are allowed (for example :ok:extra is a valid jump
-    target). Inside parenthesized blocks, prefer REM: a :: line that contains
+    character position (that form is the label-style remark). A later colon
+    ends the lookup key, so :ok:extra is the key ok (see label_charset). A ::
+    line that ends in an odd caret continues, and the next physical lines are
+    part of the remark; a ) on one of those lines does not close a surrounding
+    block. Inside parenthesized blocks, prefer REM: a :: line that contains
     ')' has historically been able to close the block early because ')' remains
     significant on label lines on some hosts/versions. On modern Windows 10
     (build 19045) live probes, a :: remark containing ')' inside ( ) did not

@@ -2,6 +2,13 @@
 
 All notable changes to batch-spec are documented in this file. Release tags follow [Semantic Versioning](https://semver.org/).
 
+## [0.72.5] - 2026-11-05
+
+### Fixed
+
+- Label lookup keys end at space, tab, `+`, `:`, `&`, `|`, `<`, and `>`. `:ok:extra` is the key `ok`, and `goto :has other` matches the first `:has` line. Comma, semicolon, and equals stay inside a label line's key
+- A caret inside a REM remark does not continue the line. A label or `::` line that ends in an odd caret does, and the joined physical lines are part of that label or remark
+
 ## [0.72.4] - 2026-10-21
 
 ### Fixed
@@ -33,6 +40,7 @@ All notable changes to batch-spec are documented in this file. Release tags foll
 - Pylint and mypy include `tests/`
 - Added SECURITY.md, CONTRIBUTING.md, Dependabot configuration, and this changelog
 
+[0.72.5]: https://github.com/BatchLang/batch-spec/releases/tag/v0.72.5
 [0.72.4]: https://github.com/BatchLang/batch-spec/releases/tag/v0.72.4
 [0.72.3]: https://github.com/BatchLang/batch-spec/releases/tag/v0.72.3
 [0.72.2]: https://github.com/BatchLang/batch-spec/releases/tag/v0.72.2

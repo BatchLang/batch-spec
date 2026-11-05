@@ -1,5 +1,5 @@
 {
-  "description": "GOTO multi-word target and spaced LABEL line stay one statement each",
+  "description": "goto :has space and the spaced LABEL line each stay one statement. Lookup cuts the target at the space",
   "parse": {
     "should_parse": true,
     "top_level_statement": "genericCmd"

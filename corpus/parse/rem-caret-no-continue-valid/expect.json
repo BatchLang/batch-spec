@@ -1,0 +1,15 @@
+{
+  "description": "A caret at the end of a REM remark does not continue; the next line is its own command",
+  "parse": {
+    "should_parse": true,
+    "top_level_statements": [
+      "genericCmd",
+      "remStmt",
+      "genericCmd"
+    ]
+  },
+  "tags": [
+    "remarks",
+    "continuation"
+  ]
+}

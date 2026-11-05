@@ -1,0 +1,12 @@
+{
+  "description": "A ) on the line joined by a label caret does not close the block",
+  "parse": {
+    "expect_syntax_errors": true
+  },
+  "tags": [
+    "label",
+    "continuation",
+    "group",
+    "negative"
+  ]
+}

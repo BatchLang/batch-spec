@@ -47,6 +47,220 @@ def _wordOk(self) -> bool:
     import re  # isort: skip
 
     return re.match(r"(?i)(?:goto|call):", self.text) is None
+
+def _remKeyword(self) -> bool:
+    # REM is the keyword only when the next character does not continue a WORD
+    # (remote, rem., rem/) and is not a rejected trailer (rem), rem%).
+    if not self._keywordTrailerOk():
+        return False
+    la = self._input.LA(1)
+    if la < 0 or la in (10, 13):
+        return True
+    if la > 127:
+        return False
+    return chr(la) not in (
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+        "0123456789_./\\:+-[]"
+    )
+
+def _remIsVerb(self) -> bool:
+    # True when this REM is the command, so the rest of the physical line is a
+    # remark and a trailing caret must not continue. echo rem stays data.
+    # Use the token start so a later tail character does not shift the prefix.
+    return self._commandPositionAtEnd(self._prefixBeforeTokenStart())
+
+def _prefixBeforeTokenStart(self) -> str:
+    start = self._tokenStartCharIndex
+    if start <= 0:
+        return ""
+    prior = self._input.getText(0, start - 1)
+    return prior.split("\n")[-1]
+
+def _remInlineParen(self) -> bool:
+    # A '(' with only whitespace before the line ending starts a group that
+    # still runs. Any other '(' stays inside the remark (rem (echo hi)).
+    if self._input.LA(1) != ord("("):
+        return False
+    look = 2
+    while True:
+        la = self._input.LA(look)
+        if la in (ord(" "), ord("\t")):
+            look += 1
+            continue
+        return la not in (ord("\r"), ord("\n"), -1)
+
+def _bareCrAhead(self) -> bool:
+    return self._input.LA(1) == 13 and self._input.LA(2) != 10
+
+def _endsWithOddCaret(self) -> bool:
+    count = 0
+    look = -1
+    while self._input.LA(look) == ord("^"):
+        count += 1
+        look -= 1
+    return count % 2 == 1
+
+def _skipSpaces(self, text: str, index: int) -> int:
+    while index < len(text) and text[index] in " \t\r":
+        index += 1
+    return index
+
+def _readWord(self, text: str, index: int) -> tuple[str, int]:
+    start = index
+    while index < len(text) and text[index] not in " \t\r&|()<>\"":
+        index += 1
+    return text[start:index], index
+
+def _skipQuote(self, text: str, index: int) -> int:
+    index += 1
+    while index < len(text) and text[index] != '"':
+        index += 1
+    if index < len(text):
+        index += 1
+    return index
+
+def _skipParen(self, text: str, index: int) -> int:
+    depth = 0
+    while index < len(text):
+        char = text[index]
+        index += 1
+        if char == "(":
+            depth += 1
+        elif char == ")":
+            depth -= 1
+            if depth == 0:
+                return index
+    return index
+
+def _skipRedirect(self, text: str, index: int) -> int:
+    # Return index unchanged when text[index] is not a redirect.
+    cursor = index
+    while cursor < len(text) and text[cursor].isdigit():
+        cursor += 1
+    if cursor >= len(text):
+        return index
+    if text.startswith(">>", cursor) or text.startswith(">&", cursor):
+        cursor += 2
+    elif text.startswith("<&", cursor):
+        cursor += 2
+    elif text[cursor] in "<>":
+        cursor += 1
+    else:
+        return index
+    cursor = self._skipSpaces(text, cursor)
+    if cursor < len(text) and text[cursor] == '"':
+        return self._skipQuote(text, cursor)
+    if cursor < len(text) and text[cursor] not in "&|()<>":
+        _word, cursor = self._readWord(text, cursor)
+    return cursor
+
+def _skipOperand(self, text: str, index: int) -> int:
+    if index >= len(text):
+        return index
+    if text[index] == '"':
+        return self._skipQuote(text, index)
+    if text[index] == "(":
+        return self._skipParen(text, index)
+    _word, index = self._readWord(text, index)
+    return index
+
+def _afterForDo(self, text: str, index: int) -> int:
+    while index < len(text):
+        index = self._skipSpaces(text, index)
+        if index >= len(text):
+            return index
+        if text[index] == "(":
+            index = self._skipParen(text, index)
+            continue
+        word, index = self._readWord(text, index)
+        if word.lower() == "do":
+            return index
+    return index
+
+def _afterIfCondition(self, text: str, index: int) -> tuple[int, bool]:
+    # Return where the IF body starts, and whether that position is a command.
+    while True:
+        index = self._skipSpaces(text, index)
+        if index >= len(text):
+            return index, True
+        if text[index] == "(":
+            return self._skipParen(text, index), True
+        word, nxt = self._readWord(text, index)
+        if word.lower() in ("not", "/i"):
+            index = nxt
+            continue
+        break
+    if index >= len(text):
+        return index, True
+    if text[index] == "(":
+        return self._skipParen(text, index), True
+    word, nxt = self._readWord(text, index)
+    low = word.lower()
+    if low in ("exist", "defined", "errorlevel", "cmdextversion"):
+        index = self._skipSpaces(text, nxt)
+        if index >= len(text):
+            return index, False
+        return self._skipOperand(text, index), True
+    if "==" in word:
+        return nxt, True
+    index = self._skipSpaces(text, nxt)
+    if index >= len(text):
+        return index, False
+    op, nxt = self._readWord(text, index)
+    op_low = op.lower()
+    if op == "==" or op_low in ("equ", "neq", "lss", "leq", "gtr", "geq"):
+        index = self._skipSpaces(text, nxt)
+        if index >= len(text):
+            return index, False
+        return self._skipOperand(text, index), True
+    if op.startswith("=="):
+        return nxt, True
+    return nxt, True
+
+def _commandPositionAtEnd(self, text: str) -> bool:
+    index = 0
+    command = True
+    while index < len(text):
+        index = self._skipSpaces(text, index)
+        if index >= len(text):
+            break
+        redirected = self._skipRedirect(text, index)
+        if redirected != index:
+            index = redirected
+            continue
+        char = text[index]
+        if char == "@" and command:
+            index += 1
+            continue
+        if char in "&|":
+            command = True
+            index += 1
+            continue
+        if char == "(":
+            command = True
+            index += 1
+            continue
+        if char == ")":
+            command = False
+            index += 1
+            continue
+        if char == '"':
+            index = self._skipQuote(text, index)
+            command = False
+            continue
+        word, index = self._readWord(text, index)
+        if word == "":
+            index += 1
+            continue
+        if command and word.lower() == "for":
+            index = self._afterForDo(text, index)
+            command = True
+            continue
+        if command and word.lower() == "if":
+            index, command = self._afterIfCondition(text, index)
+            continue
+        command = False
+    return command
 }
 
 fragment DIGIT : [0-9] ;
@@ -57,13 +271,28 @@ fragment DIGIT : [0-9] ;
 fragment FOR_VAR_LETTER : [a-zA-Z0-9?#$@_`[\]{}+.\-\\!*():/~] ;
 
 // A bare CR is not a line ending (cmd.exe drops it), so a remark runs to LF.
-LINE_COMMENT   : {self._atLineStart()}? '::' ~[\n]* -> skip ;
+// An odd trailing caret continues, and the joined physical lines stay inside
+// the remark. An even run (^^) does not. LINE_COMMENT is declared before LABEL.
+LINE_COMMENT
+    : {self._atLineStart()}? '::'
+      ( ~[\r\n] | {self._bareCrAhead()}? '\r' )*
+      ( {self._endsWithOddCaret()}? '\r'? '\n'
+        ( ~[\r\n] | {self._bareCrAhead()}? '\r' )*
+      )*
+      -> skip
+    ;
 
 // Live cmd: a label is a line beginning with ':' and the rest of the physical
-// line is the label text (spaces and most punctuation allowed). LINE_COMMENT
-// ('::...') is declared first and wins for double-colon remarks. A bare CR
-// does not end the label.
-LABEL          : {self._atLineStart()}? ':' ~[\n]+ ;
+// line is the label text (spaces and most punctuation allowed). A bare CR
+// does not end the label. An odd trailing caret continues, and those following
+// physical lines are part of this label rather than later commands.
+LABEL
+    : {self._atLineStart()}? ':'
+      ( ~[\r\n] | {self._bareCrAhead()}? '\r' )+
+      ( {self._endsWithOddCaret()}? '\r'? '\n'
+        ( ~[\r\n] | {self._bareCrAhead()}? '\r' )*
+      )*
+    ;
 
 AT             : '@' ;
 // Bare # / $ appear in args and SET names (live cmd). Keep as distinct
@@ -78,9 +307,16 @@ RBRACE         : '}' ;
 LBRACK         : '[' ;
 RBRACK         : ']' ;
 
-// REM is a statement verb (not line-start-only). remStmt consumes through EOL.
-// Longer WORD forms such as REMCASE / remark win via longest match.
-REM            : [rR][eE][mM] {self._keywordTrailerOk()}? ;
+// REM as the command verb remarks out the rest of the physical line, so a
+// trailing caret does not continue. The '(' of a following parenthesized
+// group is left for the parser. echo rem stays a short keyword token.
+// REMCASE / rem. stay WORD because _remKeyword rejects a WORD continuation.
+REM
+    : [rR][eE][mM] {self._remKeyword()}?
+      ( {self._remIsVerb()}?
+        ( ~[\r\n(] | {self._remInlineParen()}? '(' )
+      )*
+    ;
 FOR            : [fF][oO][rR] {self._keywordTrailerOk()}? ;
 IF             : [iI][fF] {self._keywordTrailerOk()}? ;
 CALL           : [cC][aA][lL][lL] {self._keywordTrailerOk()}? ;

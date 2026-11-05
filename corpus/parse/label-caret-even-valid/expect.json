@@ -1,0 +1,15 @@
+{
+  "description": "An even trailing caret on a label does not continue",
+  "parse": {
+    "should_parse": true,
+    "top_level_statements": [
+      "genericCmd",
+      "genericCmd",
+      "genericCmd"
+    ]
+  },
+  "tags": [
+    "label",
+    "continuation"
+  ]
+}

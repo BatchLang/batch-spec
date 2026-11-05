@@ -1,5 +1,5 @@
 {
-  "description": "Jump label may contain colons after the second character (:ok:extra)",
+  "description": "A label line may contain a later colon (:ok:extra). Lookup key is ok; see expansion.yaml label_charset",
   "parse": {
     "should_parse": true,
     "top_level_statement": "genericCmd"
