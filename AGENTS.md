@@ -18,23 +18,27 @@ define linter rules (E/W/S/SEC/P codes) — those live in Blinter's `spec/` tree
 ## Setup
 
 ```bash
-pip install -r requirements-dev.txt
+uv sync --extra dev
 ```
 
-`requirements-dev.txt` includes `-r requirements.txt`. Parser generation and
-`python scripts/verify.py` need `java` on `PATH`.
+`pip install -r requirements-dev.txt` is the fallback. `requirements-dev.txt`
+includes `-r requirements.txt`. Parser generation and `python scripts/verify.py`
+need `java` on `PATH`. The gate also needs `uv` on `PATH` for `uv lock --check`.
 
 ## Commands
 
-Full local gate (format, lint, yamllint, antlr-lint, types, validate, generate `--check`,
-pytest with 90% coverage on `scripts`/`conformance`, pip-audit, conformance):
+Full local gate (uv lock, trailing whitespace, isort, pyproject-fmt, black,
+yamllint, pymarkdown, antlr-lint, mypy, pylint, bandit, validate, generate
+`--check`, pytest with 90% branch coverage on `scripts`/`conformance`,
+pip-audit, conformance):
 
 ```bash
-python scripts/verify.py
+uv run python scripts/verify.py
 ```
 
-Useful skips: `--skip-format`, `--skip-lint`, `--skip-types`, `--skip-conformance`,
-`--skip-audit`.
+Useful skips: `--skip-format`, `--skip-lint`, `--skip-types`, `--skip-pytest`,
+`--skip-conformance`, `--skip-audit`. `--fix` rewrites autopep8, isort, and
+pyproject-fmt. Black stays check-only.
 
 Targeted:
 
@@ -43,7 +47,7 @@ python scripts/validate.py
 python scripts/generate_parser.py
 python scripts/generate_parser.py --check
 python conformance/run_parser.py --impl antlr
-python -m pytest --cov=scripts --cov=conformance --cov-fail-under=90
+python -m pytest
 ```
 
 ## Layout

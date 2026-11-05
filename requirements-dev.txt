@@ -1,13 +1,28 @@
+# Main Requirements
 -r requirements.txt
-antlr-v4-linter
+
+# Core Testing Packages
 pytest
-pytest-cov
 pytest-timeout
 pytest-mock
+pytest-cov
+
+# Linting
 pylint
-yamllint
 mypy
-types-PyYAML
+autopep8
+bandit
+yamllint
+pymarkdownlnt
+antlr-v4-linter
+
+# Security Analysis
+pip-audit
+
+# Types
+types-pyyaml
+
+# Code Formatting
 black
 isort
-pip-audit
+pyproject-fmt

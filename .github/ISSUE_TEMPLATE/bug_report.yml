@@ -1,0 +1,83 @@
+name: Bug report
+description: Grammar, catalog, corpus, or tooling behavior is wrong
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug.
+
+        - **Security issue?** Do not file it here. See the [security policy](https://github.com/BatchLang/batch-spec/security/policy).
+        - **A Blinter rule fires when it should not, or misses something?** File that in [Blinter](https://github.com/BatchLang/Blinter/issues). This repository does not define lint rule codes.
+  - type: checkboxes
+    id: prechecks
+    attributes:
+      label: Before you submit
+      options:
+        - label: I searched existing issues and found no duplicate.
+          required: true
+        - label: I am using a published batch-spec tag (or `main`).
+          required: true
+        - label: This is not a security vulnerability.
+          required: true
+  - type: input
+    id: version
+    attributes:
+      label: batch-spec version
+      description: The `VERSION` file or the git tag you have checked out.
+      placeholder: "e.g. 0.72.6"
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part is affected?
+      options:
+        - Grammar (grammar/*.g4)
+        - Expansion catalog (data/expansion.yaml)
+        - Command catalog (data/commands.yaml)
+        - Parse corpus or expect.json
+        - Parser conformance
+        - Tooling or CI
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      placeholder: "e.g. 3.14.0"
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "e.g. Windows 11 x64, Ubuntu 24.04, macOS 15"
+    validations:
+      required: true
+  - type: textarea
+    id: sample
+    attributes:
+      label: Minimal batch file that shows the problem
+      description: Reduce it to the smallest `.bat` or `.cmd` that still shows the issue. Remove secrets and private paths. If this is not about batch source, write "not applicable".
+      render: batch
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What live cmd.exe does, or what the catalog or grammar should say.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context

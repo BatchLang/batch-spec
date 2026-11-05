@@ -1,0 +1,37 @@
+[MAIN]
+init-hook=import sys; from pathlib import Path; root = Path.cwd(); sys.path[:0] = [str(root / "scripts"), str(root / "conformance"), str(root / "generated" / "python")]
+py-version=3.11
+# The lint step fails unless pylint rates scripts, conformance, and tests 10/10.
+fail-under=10
+# Parallel mode is the default. verify.py passes -j 1 on Python 3.15, where
+# dill still reads code.co_lnotab.
+jobs=0
+ignore-paths=^generated/
+
+[BASIC]
+# Pytest tests and private helpers are named for the behavior they check.
+no-docstring-rgx=^(_|test)
+
+[MESSAGES CONTROL]
+# disable replaces pylint's list rather than appending; keep 4.0 defaults plus
+# the extras this repo needs.
+disable=raw-checker-failed,
+        bad-inline-option,
+        locally-disabled,
+        file-ignored,
+        suppressed-message,
+        useless-suppression,
+        deprecated-pragma,
+        use-symbolic-message-instead,
+        use-implicit-booleaness-not-comparison-to-string,
+        use-implicit-booleaness-not-comparison-to-zero,
+        too-many-public-methods,
+        broad-exception-caught,
+        duplicate-code,
+        line-too-long
+
+[FORMAT]
+max-line-length=88
+
+[DESIGN]
+max-args=10

@@ -7,7 +7,12 @@ generated/python/*.interp
 generated/python/*.tokens
 htmlcov/
 .coverage
+.coverage.*
 coverage.xml
+pylint-output.txt
+tests/pytest.log
+.dmypy.json
+dmypy.json
 release-notes.md
 _tmp_audit/
 .tmp-audit/

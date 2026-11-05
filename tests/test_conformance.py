@@ -6,8 +6,8 @@
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
+import sys
 from unittest.mock import MagicMock
 
 import pytest
@@ -16,7 +16,7 @@ CONFORMANCE_DIR = Path(__file__).resolve().parent.parent / "conformance"
 if str(CONFORMANCE_DIR) not in sys.path:
     sys.path.insert(0, str(CONFORMANCE_DIR))
 
-import run_parser  # noqa: E402
+import run_parser  # noqa: E402  # pylint: disable=wrong-import-position
 
 
 def _mock_impl(
@@ -489,27 +489,27 @@ def test_check_case_top_level_statement_passes_with_real_tree(
 
 
 def test_statement_rule_name_returns_none_for_empty_children() -> None:
-    class _EmptyStatement:
+    class _EmptyStatement:  # pylint: disable=too-few-public-methods
         children: list[object] | None = []
 
     assert run_parser._statement_rule_name(_EmptyStatement()) is None
 
 
 def test_statement_rule_name_skips_nested_statement_context() -> None:
-    class StatementContext:
+    class StatementContext:  # pylint: disable=too-few-public-methods
         """ANTLR StatementContext stand-in, which the helper skips."""
 
-    class EchoStmtContext:
+    class EchoStmtContext:  # pylint: disable=too-few-public-methods
         """Stand-in whose class name resolves to the echoStmt rule."""
 
-    class _NestedStatement:
+    class _NestedStatement:  # pylint: disable=too-few-public-methods
         children: list[object] = [StatementContext(), EchoStmtContext()]
 
     assert run_parser._statement_rule_name(_NestedStatement()) == "echoStmt"
 
 
 def test_statement_rule_name_returns_none_when_no_context_child() -> None:
-    class _TokenOnly:
+    class _TokenOnly:  # pylint: disable=too-few-public-methods
         children: list[object] = [object(), "literal"]
 
     assert run_parser._statement_rule_name(_TokenOnly()) is None

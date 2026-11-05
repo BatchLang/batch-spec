@@ -153,4 +153,3 @@ Forms that fail only at runtime with non-syntax behavior (wrong ERRORLEVEL,
 the semantic companion for those cases — see `invalid_combinations` and related
 notes. Consumers (for example Blinter) should use the YAML alongside the
 grammar, not as a full cmd.exe simulator.
-

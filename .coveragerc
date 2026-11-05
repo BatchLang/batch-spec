@@ -3,10 +3,31 @@ branch = True
 source =
     scripts
     conformance
+concurrency = thread
+relative_files = True
+
 omit =
     generated/*
+    */__pycache__/*
+    */.venv/*
+    */venv/*
+    */build/*
+    */dist/*
+    */htmlcov/*
 
 [report]
-fail_under = 90
+fail_under = 90.0
 show_missing = True
 skip_covered = False
+precision = 2
+sort = Cover
+
+exclude_also =
+    if TYPE_CHECKING:
+
+[html]
+directory = htmlcov
+title = Coverage Report for batch-spec
+
+[xml]
+output = coverage.xml

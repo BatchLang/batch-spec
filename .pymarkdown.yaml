@@ -1,0 +1,63 @@
+# Catalog notes and pinned Actions commands are single long lines, matching
+# the line-length ceiling in .yamllint.yaml. Code blocks and tables are
+# excluded; prose over this limit is wrapped.
+plugins:
+  MD013:
+    line_length: 360
+    code_blocks: false
+    tables: false
+  # Each changelog release repeats Fixed, Changed, and Added.
+  MD024:
+    siblings_only: true
+  # Docs place a list or an example fence directly under a heading.
+  # Inserting the blank lines these rules want dedents those fences, and a
+  # leading "#" in a batch sample is then parsed as a heading.
+  MD022:
+    enabled: false
+  MD031:
+    enabled: false
+  MD032:
+    enabled: false
+  # Bold lead-ins in the catalogs are labels, not headings.
+  MD036:
+    enabled: false
+  # Separators are sized to the column. Compact, tight, and aligned all
+  # require exactly three dashes, which these tables do not use.
+  MD060:
+    enabled: false
+  # Catalog code spans keep significant leading or trailing spaces
+  # (` and 80`, `call `, `(call )`).
+  MD038:
+    enabled: false
+  # The pull request body is a GitHub template. Its first heading is h2
+  # because the pull request title is the h1.
+  # Expansion and command catalog bullets are single reference lines.
+  per-file-ignores:
+    .github/pull_request_template.md:
+      - MD041
+    docs/expansion.md:
+      - MD013
+    docs/commands-catalog.md:
+      - MD013
+
+extensions:
+  markdown-tables:
+    enabled: true
+  markdown-task-list-items:
+    enabled: true
+
+system:
+  exclude_path:
+    - ".git/**"
+    - ".venv/**"
+    - "venv/**"
+    - "htmlcov/**"
+    - "dist/**"
+    - "build/**"
+    - "corpus/**"
+    - "generated/**"
+    - ".mypy_cache/**"
+    - ".pytest_cache/**"
+    # Import stub (@AGENTS.md), not a document. per-file-ignores stores the
+    # filename in lowercase, so it cannot match CLAUDE.md on Linux.
+    - "CLAUDE.md"

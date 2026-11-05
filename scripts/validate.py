@@ -5,9 +5,9 @@ from __future__ import annotations
 
 import json
 import logging
+from pathlib import Path
 import re
 import sys
-from pathlib import Path
 
 import jsonschema
 import yaml
@@ -16,7 +16,7 @@ _SCRIPTS_DIR = Path(__file__).resolve().parent
 if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
 
-from _paths import (  # noqa: E402
+from _paths import (  # noqa: E402  # pylint: disable=wrong-import-position
     COMMANDS_YAML,
     CORPUS_DIR,
     DOCS_DIR,
@@ -211,6 +211,7 @@ def _validate_version_sync() -> None:
 
 
 def main() -> None:
+    """Validate version sync, catalogs, docs encoding, and the parse corpus."""
     logging.basicConfig(
         level=logging.INFO,
         format="%(levelname)s %(message)s",

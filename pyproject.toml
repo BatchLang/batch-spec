@@ -2,24 +2,83 @@
 name = "batch-spec"
 version = "0.72.6"
 description = "Single source of truth for Windows batch/cmd.exe language structure"
-requires-python = ">=3.11"
-license = "AGPL-3.0-or-later"
 readme = "README.md"
+license = "AGPL-3.0-or-later"
+license-files = [ "COPYING" ]
+maintainers = [ { name = "tboy1337", email = "BatchLang@proton.me" } ]
+authors = [ { name = "tboy1337", email = "BatchLang@proton.me" } ]
+requires-python = ">=3.11,<3.16"
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Topic :: Software Development",
+]
+dependencies = [
+  "antlr4-python3-runtime==4.13.2",
+  "jsonschema",
+  "pyyaml",
+]
+optional-dependencies.dev = [
+  "antlr-v4-linter",
+  "autopep8",
+  "bandit",
+  "batch-spec[test]",
+  "black",
+  "isort",
+  "mypy",
+  "pip-audit",
+  "pylint",
+  "pymarkdownlnt",
+  "pyproject-fmt",
+  "types-pyyaml",
+  "yamllint",
+]
+optional-dependencies.test = [
+  "pytest",
+  "pytest-cov",
+  "pytest-mock",
+  "pytest-timeout",
+]
+urls.Documentation = "https://github.com/BatchLang/batch-spec/tree/main/docs"
+urls.Homepage = "https://github.com/BatchLang/batch-spec"
+urls.Issues = "https://github.com/BatchLang/batch-spec/issues"
+urls.Repository = "https://github.com/BatchLang/batch-spec.git"
+
+[tool.uv]
+package = false
 
 [tool.black]
+target-version = [ "py311", "py312", "py313", "py314", "py315" ]
 line-length = 88
-target-version = ["py311", "py312", "py313", "py314", "py315"]
-include = '\.pyi?$'
 
 [tool.isort]
 profile = "black"
-line_length = 88
 py_version = 311
-src_paths = ["scripts", "conformance", "tests"]
+atomic = true
+line_length = 88
+force_sort_within_sections = true
+lexicographical = true
+combine_as_imports = true
+src_paths = [ "conformance", "scripts", "tests" ]
+skip_gitignore = true
+
+[tool.pyproject-fmt]
+max_supported_python = "3.15"
+
+[tool.bandit]
+exclude_dirs = [ ".venv", "build", "dist", "tests", "venv" ]
 
 [tool.pip-audit]
 requirement = [
-    "requirements.txt",
-    "requirements-dev.txt",
+  "requirements.txt",
+  "requirements-dev.txt",
 ]
-

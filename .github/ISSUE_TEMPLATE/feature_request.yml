@@ -1,0 +1,52 @@
+name: Feature request
+description: Suggest a grammar, catalog, corpus, or tooling change
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Lint-rule proposals belong in [Blinter](https://github.com/BatchLang/Blinter/issues). This repository is the language specification.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Grammar
+        - Expansion catalog
+        - Command catalog
+        - Parse corpus
+        - Conformance runner
+        - Tooling or CI
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What are you trying to describe or check, and what gets in the way today?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Live cmd.exe evidence
+      description: Language changes need a command and the result you observed. Tooling-only ideas can say "not applicable".
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: I'm willing to open a pull request for this.

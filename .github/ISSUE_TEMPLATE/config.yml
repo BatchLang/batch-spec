@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/BatchLang/batch-spec/security/advisories/new
+    about: Please do not report vulnerabilities in public issues. Use GitHub private vulnerability reporting.
+  - name: Linter rule bug
+    url: https://github.com/BatchLang/Blinter/issues
+    about: Incorrect lint findings (E/W/S/SEC/P codes) belong in Blinter. This repository is the language specification.

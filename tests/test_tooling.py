@@ -5,9 +5,9 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 import re
 import sys
-from pathlib import Path
 from unittest.mock import MagicMock
 
 import jsonschema
@@ -18,10 +18,10 @@ SCRIPTS_DIR = Path(__file__).resolve().parent.parent / "scripts"
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
-import _paths  # noqa: E402
-import generate_parser  # noqa: E402
-import release_notes  # noqa: E402
-import validate  # noqa: E402
+import _paths  # noqa: E402  # pylint: disable=wrong-import-position
+import generate_parser  # noqa: E402  # pylint: disable=wrong-import-position
+import release_notes  # noqa: E402  # pylint: disable=wrong-import-position
+import validate  # noqa: E402  # pylint: disable=wrong-import-position
 
 
 def test_paths_resolve_to_existing_targets() -> None:
@@ -474,6 +474,7 @@ def test_download_antlr_jar_reads_response(monkeypatch: pytest.MonkeyPatch) -> N
 
     class _Response:
         def read(self) -> bytes:
+            """Return the canned download body."""
             return b"payload"
 
         def __enter__(self) -> "_Response":

@@ -14,7 +14,8 @@
 *.cfg text eol=lf
 *.toml text eol=lf
 *.rc text eol=lf
-.pylintrc text eol=lf
+pylintrc text eol=lf
+uv.lock text eol=lf
 .coveragerc text eol=lf
 .gitattributes text eol=lf
 .gitignore text eol=lf

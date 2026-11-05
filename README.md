@@ -27,30 +27,48 @@ The package version is the contents of [`VERSION`](VERSION) (currently **0.72.6*
 ## Validate
 
 ```bash
-pip install -r requirements.txt
+uv sync --extra dev
 python scripts/validate.py
 python scripts/generate_parser.py --check
 python conformance/run_parser.py --impl antlr
 ```
 
-`python scripts/generate_parser.py` rewrites `generated/python/`. `--check` compares the committed parser to a fresh ANTLR run and does not write it. Both commands need `java` on `PATH`. The script downloads the ANTLR **4.13.2** complete jar from Maven Central and runs it only after the SHA-1 and SHA-256 match the published artifact. `conformance/run_parser.py --case <id>` checks one corpus case.
+`pip install -r requirements.txt` is the fallback when `uv` is not available.
+`python scripts/generate_parser.py` rewrites `generated/python/`. `--check`
+compares the committed parser to a fresh ANTLR run and does not write it.
+Both commands need `java` on `PATH`. The script downloads the ANTLR **4.13.2**
+complete jar from Maven Central and runs it only after the SHA-1 and SHA-256
+match the published artifact. `conformance/run_parser.py --case <id>` checks
+one corpus case.
 
 ## Local verification
 
 Supported Python versions: **3.11**, **3.12**, **3.13**, **3.14**, and **3.15**.
 
-For linting (including yamllint on every YAML file and antlr-lint on `grammar/`), type checking, tests (>=90% coverage), pip-audit, and conformance:
+The local gate formats and lints Python, YAML, Markdown, and `grammar/`,
+type-checks, audits dependencies, runs tests at >=90% branch coverage of
+`scripts` and `conformance`, and runs parser conformance.
 
 ```bash
-pip install -r requirements-dev.txt
-python scripts/verify.py
+uv sync --extra dev
+uv run python scripts/verify.py
 ```
+
+`pip install -r requirements-dev.txt` then `python scripts/verify.py` is the
+fallback. `uv.lock` is the locked development environment. `verify.py` needs
+`uv` and `java` on `PATH`.
 
 Useful flags:
 
 ```bash
 python scripts/verify.py --skip-format --skip-conformance --skip-audit
+python scripts/verify.py --fix
+python scripts/verify.py --skip-pytest
 ```
+
+`--fix` rewrites trailing whitespace, import order, and `pyproject.toml`.
+Black stays check-only. `--skip-pytest` is what CI's quality job runs; the
+test matrix runs pytest and conformance on its own.
 
 ## Documentation
 
@@ -67,4 +85,3 @@ python scripts/verify.py --skip-format --skip-conformance --skip-audit
 ## License
 
 AGPL-3.0-or-later -- see [COPYING](COPYING).
-

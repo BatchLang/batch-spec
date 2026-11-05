@@ -5,14 +5,14 @@ from __future__ import annotations
 
 import argparse
 import logging
-import sys
 from pathlib import Path
+import sys
 
 _SCRIPTS_DIR = Path(__file__).resolve().parent
 if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
 
-from _paths import REPO_ROOT  # noqa: E402
+from _paths import REPO_ROOT  # noqa: E402  # pylint: disable=wrong-import-position
 
 LOGGER = logging.getLogger(__name__)
 

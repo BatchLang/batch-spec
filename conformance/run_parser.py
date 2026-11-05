@@ -7,8 +7,8 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-import sys
 from pathlib import Path
+import sys
 from typing import Callable, List
 
 _SCRIPTS_DIR = Path(__file__).resolve().parent.parent / "scripts"
@@ -17,8 +17,10 @@ if str(_SCRIPTS_DIR) not in sys.path:
 
 # `as` marks an explicit re-export so mypy treats the name as part of this module.
 # pylint: disable=useless-import-alias
-from _paths import CORPUS_DIR as CORPUS_DIR  # noqa: E402
-from _paths import GENERATED_DIR as GENERATED_DIR  # noqa: E402
+from _paths import (  # noqa: E402  # pylint: disable=wrong-import-position
+    CORPUS_DIR as CORPUS_DIR,
+    GENERATED_DIR as GENERATED_DIR,
+)
 
 # pylint: enable=useless-import-alias
 
@@ -120,6 +122,8 @@ def _top_level_statement_names(tree: object) -> list[str]:
 
 
 def _parse_antlr(lines: List[str]) -> tuple[object | None, list[str]]:
+    # Generated modules are importable only after their directory is on sys.path.
+    # pylint: disable=import-outside-toplevel
     if str(GENERATED_DIR) not in sys.path:
         sys.path.insert(0, str(GENERATED_DIR))
 
@@ -134,7 +138,7 @@ def _parse_antlr(lines: List[str]) -> tuple[object | None, list[str]]:
     parser = BatchParser(token_stream)
     errors: list[str] = []
 
-    class _Listener(ErrorListener):  # type: ignore[misc]
+    class _Listener(ErrorListener):  # type: ignore[misc, no-any-unimported]
         def syntaxError(  # pylint: disable=arguments-differ,too-many-positional-arguments
             self,
             recognizer: object,
@@ -238,6 +242,7 @@ def _check_case(
 
 
 def main() -> int:
+    """Run the selected conformance implementation. Return 0 when every case passes."""
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     parser = argparse.ArgumentParser(description="batch-spec parser conformance")
     parser.add_argument("--impl", default="antlr", choices=sorted(_IMPLEMENTATIONS))

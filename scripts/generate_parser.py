@@ -7,18 +7,19 @@ import argparse
 import hashlib
 import logging
 import os
+from pathlib import Path
 import shutil
 import subprocess
 import sys
 import tempfile
 import urllib.request
-from pathlib import Path
 
 _SCRIPTS_DIR = Path(__file__).resolve().parent
 if str(_SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(_SCRIPTS_DIR))
 
-from _paths import GENERATED_DIR, GRAMMAR_DIR  # noqa: E402
+from _paths import GENERATED_DIR  # pylint: disable=wrong-import-position
+from _paths import GRAMMAR_DIR  # noqa: E402; pylint: disable=wrong-import-position
 
 LOGGER = logging.getLogger(__name__)
 
@@ -86,7 +87,9 @@ def _download_antlr_jar() -> bytes:
         _ANTLR_JAR_URL,
         headers={"User-Agent": "batch-spec-generate-parser"},
     )
-    with urllib.request.urlopen(request, timeout=60) as response:
+    # The URL is the pinned Maven Central jar. The caller rejects bytes that
+    # do not match the published SHA-1 and SHA-256 before java runs them.
+    with urllib.request.urlopen(request, timeout=60) as response:  # nosec B310
         payload: object = response.read()
     if not isinstance(payload, bytes):
         raise SystemExit("ANTLR download did not return bytes")
@@ -224,6 +227,7 @@ def _write_init(output_dir: Path) -> None:
 
 
 def generate_parser() -> None:
+    """Replace generated/python with a fresh ANTLR run and a grammar stamp."""
     if GENERATED_DIR.exists():
         shutil.rmtree(GENERATED_DIR)
     GENERATED_DIR.mkdir(parents=True, exist_ok=True)
@@ -269,6 +273,7 @@ def _check_generated() -> None:
 
 
 def main() -> None:
+    """Generate the parser, or check the committed output when ``--check`` is set."""
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     parser = argparse.ArgumentParser(description="Generate ANTLR Python parser")
     parser.add_argument("--check", action="store_true")

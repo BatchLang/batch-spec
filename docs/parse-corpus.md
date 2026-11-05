@@ -2,7 +2,12 @@
 
 Each fixture lives under `corpus/parse/<case-id>/` and must contain both:
 
-- `input.cmd` - UTF-8 batch source. Line endings are significant: the reader splits on LF and keeps a CR from a CRLF pair, so a caret that escapes the two-byte ending is still `^\r\n` when the lexer runs. A CR that is not followed by LF is kept in the line text and the lexer discards it; it does not start a line. Existing fixtures stay LF. Add a CRLF or bare-CR fixture only when the ending changes the parse.
+- `input.cmd` - UTF-8 batch source. Line endings are significant: the reader
+  splits on LF and keeps a CR from a CRLF pair, so a caret that escapes the
+  two-byte ending is still `^\r\n` when the lexer runs. A CR that is not
+  followed by LF is kept in the line text and the lexer discards it; it does
+  not start a line. Existing fixtures stay LF. Add a CRLF or bare-CR fixture
+  only when the ending changes the parse.
 - `expect.json` - expectations validated by `schema/parse-expect.schema.json`
 
 `scripts/validate.py` fails if either file is missing for a case directory.
@@ -36,7 +41,6 @@ after an unquoted `)` that closes a parenthesized IF/FOR/naked group — see
 [`data/expansion.yaml`](../data/expansion.yaml)
 `command_chaining.close_paren_leftover_in_block`). Keep `should_parse: false`
 available for implementations that fail without a clean tree.
-
 
 ## Scope
 

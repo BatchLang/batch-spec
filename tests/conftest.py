@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 import shutil
 import subprocess
 import sys
-from pathlib import Path
 
 import pytest
 
@@ -56,16 +56,19 @@ def _ensure_generated_parser() -> None:
 
 @pytest.fixture
 def repo_root() -> Path:
+    """Return the repository root."""
     return REPO_ROOT
 
 
 @pytest.fixture(scope="session")
 def generated_parser() -> None:
+    """Use the committed parser, or generate it when the files are missing."""
     _ensure_generated_parser()
 
 
 @pytest.fixture
 def tmp_corpus(tmp_path: Path) -> Path:
+    """Return an empty corpus/parse directory under the test tmp path."""
     corpus_root = tmp_path / "corpus" / "parse"
     corpus_root.mkdir(parents=True)
     return corpus_root

@@ -1,0 +1,153 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: en-US
+early_access: false
+tone_instructions: >-
+  Direct and technical. No emoji. Report bugs, security issues, false
+  positives, and spec drift. Skip style nits already enforced by Black,
+  isort, mypy, and pylint.
+reviews:
+  profile: assertive
+  high_level_summary: true
+  high_level_summary_instructions: >-
+    Write a short technical summary of the behavior change. No emoji.
+    Name grammar files, catalog keys, or corpus case ids when the change
+    affects them.
+  poem: false
+  sequence_diagrams: false
+  suggested_labels: true
+  auto_apply_labels: false
+  labeling_instructions:
+    - label: bug
+      instructions: >-
+        Defect in the grammar, catalogs, corpus, conformance runner, or
+        tooling.
+    - label: enhancement
+      instructions: New language coverage or tooling that is not a defect fix.
+    - label: documentation
+      instructions: Documentation-only change.
+  auto_review:
+    enabled: true
+    drafts: false
+    ignore_title_keywords:
+      - WIP
+      - "[skip review]"
+  path_instructions:
+    - path: "**/*.py"
+      instructions: |
+        batch-spec is the Windows batch language specification. It must not execute batch except the ANTLR parser used by conformance.
+
+        - Support Python >=3.11,<3.16. Annotate fully. Keep imports at module top. The generated-parser imports inside conformance/run_parser.py stay inside the function because those modules are on sys.path only after the path insert.
+        - mypy is strict. scripts, conformance, and tests are not packages, so mypy.ini overrides name each file by its stem. scripts and conformance relax disallow_any_expr. tests relax further.
+        - Black (88 columns) and isort (black profile, force_sort_within_sections) own formatting. Pylint uses pylintrc. Do not request Ruff or Flake8 changes.
+        - Do not change the version in VERSION, pyproject.toml, or the README marker unless the pull request is a release.
+    - path: "grammar/**/*.g4"
+      instructions: |
+        grammar/BatchLexer.g4 and grammar/BatchParser.g4 are the syntax authority. A grammar change must regenerate generated/python via scripts/generate_parser.py and update corpus fixtures. Do not invent cmd.exe syntax without a corpus case.
+    - path: "data/**/*.yaml"
+      instructions: |
+        data/expansion.yaml and data/commands.yaml are the language catalogs. They are not Blinter lint rules. A behavior change needs live cmd evidence in the corpus or the catalog notes. Do not add E/W/S/SEC/P rule codes.
+    - path: "generated/python/**"
+      instructions: |
+        Fully generated from grammar/*.g4 by python scripts/generate_parser.py. Review only for drift from the grammar or the generator. Do not request hand edits. A diff without a grammar or generator change is a defect.
+    - path: "corpus/parse/**"
+      instructions: |
+        These bytes are the parse oracle. .gitattributes marks corpus/** as -text, so line endings must not be normalized. A case is input.cmd plus expect.json. A directory name containing invalid does not mean expect_syntax_errors. Many invalid cases still should_parse.
+    - path: "tests/**/*.py"
+      instructions: |
+        Add cases to the existing topical module. Do not create a similarly named new test module.
+        Pytest uses filterwarnings=error, strict markers, and a 300 second timeout.
+        Do not weaken assertions, filters, or markers to make a change pass.
+    - path: ".github/workflows/**/*.yml"
+      instructions: |
+        Pin actions to a full commit SHA with a version comment. Keep permissions least-privilege. The release job publishes only a tag that matches VERSION. Do not add a release from a version bump on main.
+    - path: "docs/**/*.md"
+      instructions: |
+        Documentation belongs in docs/, except README.md, CONTRIBUTING.md, SECURITY.md, CHANGELOG.md, and AGENTS.md.
+        PyMarkdown (.pymarkdown.yaml) checks Markdown. Do not apply markdownlint or Vale. No emoji.
+        docs/expansion.md and docs/commands-catalog.md are long catalog bullets and ignore MD013.
+    - path: "pyproject.toml"
+      instructions: |
+        This is not a published wheel. [tool.uv] package stays false. requires-python stays >=3.11,<3.16. The ANTLR runtime pin stays on 4.13.2. Do not change [project].version unless this pull request is a release that also updates VERSION, the README marker, and CHANGELOG.md.
+    - path: "uv.lock"
+      instructions: |
+        Comment only when a distribution is added, removed, or upgraded in a way that changes runtime behavior, the supported Python range, or security. Ignore lockfile formatting and transitive hash churn.
+  tools:
+    # Black, isort, and pylint are the Python gate. Ruff and Flake8 have no project config and would fight it.
+    ruff:
+      enabled: false
+    flake8:
+      enabled: false
+    # Markdown is checked with PyMarkdown (.pymarkdown.yaml). Vale and LanguageTool have no project config.
+    markdownlint:
+      enabled: false
+    vale:
+      enabled: false
+    languagetool:
+      enabled: false
+    # Corpus fixtures are intentionally invalid batch. Do not lint them as scripts.
+    blinter:
+      enabled: false
+  pre_merge_checks:
+    docstrings:
+      mode: "off"
+    title:
+      mode: warning
+      requirements: >-
+        Imperative sentence, such as "Fix caret continuation in labels" or
+        "Document FOR /F tokens".
+    custom_checks:
+      - name: Generated parser matches the grammar
+        mode: warning
+        instructions: |
+          Fail when generated/python changes without grammar/*.g4 or scripts/generate_parser.py in the same pull request.
+          Pass when the generated parser is unchanged, or the grammar or generator changed with it.
+      - name: Release version bump is complete
+        mode: warning
+        instructions: |
+          Pass when VERSION and pyproject.toml [project].version are unchanged.
+          When either changes, fail unless the same pull request also updates the other, the README currently **X.Y.Z** marker, and CHANGELOG.md.
+          A pull request that is not a release must not change the version.
+  finishing_touches:
+    docstrings:
+      enabled: true
+    unit_tests:
+      enabled: true
+chat:
+  art: false
+knowledge_base:
+  learnings:
+    scope: local
+  issues:
+    scope: local
+  pull_requests:
+    scope: local
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - files: "AGENTS.md,CONTRIBUTING.md"
+        applyTo: "**/*"
+      - files: "docs/parse-corpus.md"
+        applyTo: "corpus/**/*,conformance/**/*.py,docs/parse-corpus.md"
+      - files: "SECURITY.md"
+        applyTo: "scripts/**/*.py,SECURITY.md"
+code_generation:
+  docstrings:
+    language: en-US
+    path_instructions:
+      - path: "scripts/**/*.py"
+        instructions: |
+          Match the docstring style of the surrounding module. Document behavior, parameters, and return values. Do not restate the function name. No emoji.
+      - path: "tests/**/*.py"
+        instructions: |
+          Do not add docstrings or narrative comments to tests.
+      - path: "generated/python/**"
+        instructions: |
+          Do not edit generated parser files.
+  unit_tests:
+    path_instructions:
+      - path: "scripts/**/*.py"
+        instructions: |
+          Add tests to the existing topical module under tests/. Do not create a new test module.
+      - path: "grammar/**/*.g4"
+        instructions: |
+          Add or update corpus/parse/<case-id>/input.cmd and expect.json. Do not normalize line endings in corpus/.
