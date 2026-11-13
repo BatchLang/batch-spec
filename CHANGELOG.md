@@ -2,6 +2,12 @@
 
 All notable changes to batch-spec are documented in this file. Release tags follow [Semantic Versioning](https://semver.org/).
 
+## [0.72.7] - 2026-11-13
+
+### Fixed
+
+- `removed_commands` no longer lists `browstat`, `inuse`, or `streams`. Those names were never stock DOS or Windows commands. The key is only commands that shipped with DOS or Windows and are absent on modern cmd
+
 ## [0.72.6] - 2026-11-05
 
 ### Fixed
@@ -59,6 +65,7 @@ All notable changes to batch-spec are documented in this file. Release tags foll
 - Pylint and mypy include `tests/`
 - Added SECURITY.md, CONTRIBUTING.md, Dependabot configuration, and this changelog
 
+[0.72.7]: https://github.com/BatchLang/batch-spec/releases/tag/v0.72.7
 [0.72.6]: https://github.com/BatchLang/batch-spec/releases/tag/v0.72.6
 [0.72.5]: https://github.com/BatchLang/batch-spec/releases/tag/v0.72.5
 [0.72.4]: https://github.com/BatchLang/batch-spec/releases/tag/v0.72.4

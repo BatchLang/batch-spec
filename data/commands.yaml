@@ -352,14 +352,11 @@ removed_commands:
   append: Absent on modern Windows hosts (not a supported cmd.exe internal; historical DOS APPEND)
   assign: Removed since Windows NT (not supported in cmd.exe)
   backup: Removed since Windows NT (replaced by ntbackup then wbadmin)
-  browstat: Windows Resource Kit add-on tool (browser status); not a stock cmd.exe command
   diskcomp: Removed Windows command
   diskcopy: Removed Windows command
   edlin: Historical DOS line editor; not present on 64-bit Windows (was a 16-bit NTVDM tool on 32-bit editions only)
   graftabl: Removed / unavailable on modern Windows (still listed by HELP; binary not present)
-  inuse: Windows Resource Kit add-on tool; not a stock cmd.exe command
   join: Removed since Windows NT (not supported in cmd.exe)
-  streams: Sysinternals Streams tool; not a stock cmd.exe command
 
 older_windows_commands:
   - command
