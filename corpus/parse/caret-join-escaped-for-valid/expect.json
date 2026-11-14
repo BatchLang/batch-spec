@@ -1,0 +1,15 @@
+{
+  "description": "A leading space escaped by caret join is not the FOR keyword",
+  "parse": {
+    "should_parse": true,
+    "top_level_statements": [
+      "genericCmd",
+      "genericCmd",
+      "genericCmd"
+    ]
+  },
+  "tags": [
+    "for",
+    "caret"
+  ]
+}

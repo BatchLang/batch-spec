@@ -1,0 +1,11 @@
+{
+  "description": "A percent sign escaped by caret join does not start a FOR metavar",
+  "parse": {
+    "should_parse": true,
+    "top_level_statement": "genericCmd"
+  },
+  "tags": [
+    "for",
+    "caret"
+  ]
+}

@@ -1051,6 +1051,7 @@ commandTail
 
 argWord
     : WORD
+    | CONTINUED_WORD
     | FOR
     | IF
     | SET

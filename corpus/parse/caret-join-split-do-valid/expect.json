@@ -1,0 +1,11 @@
+{
+  "description": "DO split across a caret join is the DO keyword",
+  "parse": {
+    "should_parse": true,
+    "top_level_statement": "forStmt"
+  },
+  "tags": [
+    "for",
+    "caret"
+  ]
+}

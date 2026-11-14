@@ -1,0 +1,12 @@
+{
+  "description": "A parenthesis escaped by caret join stays inside a usebackq command",
+  "parse": {
+    "should_parse": true,
+    "top_level_statement": "forStmt"
+  },
+  "tags": [
+    "for",
+    "quoting",
+    "caret"
+  ]
+}

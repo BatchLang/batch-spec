@@ -1,0 +1,14 @@
+{
+  "description": "REM split across a caret join remarks out the rest of that line",
+  "parse": {
+    "should_parse": true,
+    "top_level_statements": [
+      "genericCmd",
+      "remStmt",
+      "genericCmd"
+    ]
+  },
+  "tags": [
+    "caret"
+  ]
+}

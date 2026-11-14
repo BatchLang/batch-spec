@@ -1,0 +1,14 @@
+{
+  "description": "A parenthesis escaped by caret join does not open a block",
+  "parse": {
+    "should_parse": true,
+    "top_level_statements": [
+      "genericCmd",
+      "genericCmd",
+      "genericCmd"
+    ]
+  },
+  "tags": [
+    "caret"
+  ]
+}

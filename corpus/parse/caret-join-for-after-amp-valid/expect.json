@@ -1,0 +1,11 @@
+{
+  "description": "FOR at column zero after a caret join is the FOR keyword",
+  "parse": {
+    "should_parse": true,
+    "top_level_statement": "forStmt"
+  },
+  "tags": [
+    "for",
+    "caret"
+  ]
+}
