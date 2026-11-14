@@ -2,6 +2,13 @@
 
 All notable changes to batch-spec are documented in this file. Release tags follow [Semantic Versioning](https://semver.org/).
 
+## [0.72.8] - 2026-11-14
+
+### Fixed
+
+- A caret that joins a physical line also escapes the first character of the next line. A leading space is not a separator, a leading parenthesis, quote, ampersand, pipe, or percent sign is not syntax, and a keyword may be split across the break (`d^` / `o` is DO, `r^` / `em` is REM)
+- An unquoted parenthesis inside a `FOR /F` usebackq backtick command closes `IN (`. A parenthesis inside quotes, or one escaped by a caret, stays in the command
+
 ## [0.72.7] - 2026-11-13
 
 ### Fixed
@@ -65,6 +72,7 @@ All notable changes to batch-spec are documented in this file. Release tags foll
 - Pylint and mypy include `tests/`
 - Added SECURITY.md, CONTRIBUTING.md, Dependabot configuration, and this changelog
 
+[0.72.8]: https://github.com/BatchLang/batch-spec/releases/tag/v0.72.8
 [0.72.7]: https://github.com/BatchLang/batch-spec/releases/tag/v0.72.7
 [0.72.6]: https://github.com/BatchLang/batch-spec/releases/tag/v0.72.6
 [0.72.5]: https://github.com/BatchLang/batch-spec/releases/tag/v0.72.5

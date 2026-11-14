@@ -1,0 +1,10 @@
+{
+  "description": "A space escaped by caret join is not the separator before DO",
+  "parse": {
+    "expect_syntax_errors": true
+  },
+  "tags": [
+    "for",
+    "caret"
+  ]
+}

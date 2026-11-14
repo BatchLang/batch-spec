@@ -1,0 +1,11 @@
+{
+  "description": "IF split across a caret join is the IF keyword",
+  "parse": {
+    "should_parse": true,
+    "top_level_statement": "ifStmt"
+  },
+  "tags": [
+    "if",
+    "caret"
+  ]
+}

@@ -365,30 +365,34 @@ RBRACK         : ']' ;
 // trailing caret does not continue. The '(' of a following parenthesized
 // group is left for the parser. echo rem stays a short keyword token.
 // REMCASE / rem. stay WORD because _remKeyword rejects a WORD continuation.
+// A caret join may sit between the letters of a keyword. The escaped letter
+// is still that letter, so d^ / o is DO and r^ / em is REM.
+fragment CJ : '^' '\r'? '\n' ;
+
 REM
-    : [rR][eE][mM] {self._remKeyword()}?
+    : [rR] CJ? [eE] CJ? [mM] {self._remKeyword()}?
       ( {self._remIsVerb()}?
         ( ~[\r\n(] | {self._remInlineParen()}? '(' )
       )*
     ;
-FOR            : [fF][oO][rR] {self._keywordTrailerOk()}? ;
-IF             : [iI][fF] {self._keywordTrailerOk()}? ;
-CALL           : [cC][aA][lL][lL] {self._keywordTrailerOk()}? ;
-GOTO           : [gG][oO][tT][oO] {self._keywordTrailerOk()}? ;
-SET            : [sS][eE][tT] {self._keywordTrailerOk()}? ;
-SETLOCAL       : [sS][eE][tT][lL][oO][cC][aA][lL] {self._keywordTrailerOk()}? ;
-ENDLOCAL       : [eE][nN][dD][lL][oO][cC][aA][lL] {self._keywordTrailerOk()}? ;
-DO             : [dD][oO] {self._keywordTrailerOk()}? ;
-IN             : [iI][nN] {self._keywordTrailerOk()}? ;
-EXIST          : [eE][xX][iI][sS][tT] {self._keywordTrailerOk()}? ;
-DEFINED        : [dD][eE][fF][iI][nN][eE][dD] {self._keywordTrailerOk()}? ;
-NOT            : [nN][oO][tT] {self._keywordTrailerOk()}? ;
-ERRORLEVEL     : [eE][rR][rR][oO][rR][lL][eE][vV][eE][lL] {self._keywordTrailerOk()}? ;
-CMDEXTVERSION  : [cC][mM][dD][eE][xX][tT][vV][eE][rR][sS][iI][oO][nN] {self._keywordTrailerOk()}? ;
-ELSE           : [eE][lL][sS][eE] {self._keywordTrailerOk()}? ;
-EXIT           : [eE][xX][iI][tT] {self._keywordTrailerOk()}? ;
-SHIFT          : [sS][hH][iI][fF][tT] {self._keywordTrailerOk()}? ;
-EOF_KW         : [eE][oO][fF] {self._keywordTrailerOk()}? ;
+FOR            : [fF] CJ? [oO] CJ? [rR] {self._keywordTrailerOk()}? ;
+IF             : [iI] CJ? [fF] {self._keywordTrailerOk()}? ;
+CALL           : [cC] CJ? [aA] CJ? [lL] CJ? [lL] {self._keywordTrailerOk()}? ;
+GOTO           : [gG] CJ? [oO] CJ? [tT] CJ? [oO] {self._keywordTrailerOk()}? ;
+SET            : [sS] CJ? [eE] CJ? [tT] {self._keywordTrailerOk()}? ;
+SETLOCAL       : [sS] CJ? [eE] CJ? [tT] CJ? [lL] CJ? [oO] CJ? [cC] CJ? [aA] CJ? [lL] {self._keywordTrailerOk()}? ;
+ENDLOCAL       : [eE] CJ? [nN] CJ? [dD] CJ? [lL] CJ? [oO] CJ? [cC] CJ? [aA] CJ? [lL] {self._keywordTrailerOk()}? ;
+DO             : [dD] CJ? [oO] {self._keywordTrailerOk()}? ;
+IN             : [iI] CJ? [nN] {self._keywordTrailerOk()}? ;
+EXIST          : [eE] CJ? [xX] CJ? [iI] CJ? [sS] CJ? [tT] {self._keywordTrailerOk()}? ;
+DEFINED        : [dD] CJ? [eE] CJ? [fF] CJ? [iI] CJ? [nN] CJ? [eE] CJ? [dD] {self._keywordTrailerOk()}? ;
+NOT            : [nN] CJ? [oO] CJ? [tT] {self._keywordTrailerOk()}? ;
+ERRORLEVEL     : [eE] CJ? [rR] CJ? [rR] CJ? [oO] CJ? [rR] CJ? [lL] CJ? [eE] CJ? [vV] CJ? [eE] CJ? [lL] {self._keywordTrailerOk()}? ;
+CMDEXTVERSION  : [cC] CJ? [mM] CJ? [dD] CJ? [eE] CJ? [xX] CJ? [tT] CJ? [vV] CJ? [eE] CJ? [rR] CJ? [sS] CJ? [iI] CJ? [oO] CJ? [nN] {self._keywordTrailerOk()}? ;
+ELSE           : [eE] CJ? [lL] CJ? [sS] CJ? [eE] {self._keywordTrailerOk()}? ;
+EXIT           : [eE] CJ? [xX] CJ? [iI] CJ? [tT] {self._keywordTrailerOk()}? ;
+SHIFT          : [sS] CJ? [hH] CJ? [iI] CJ? [fF] CJ? [tT] {self._keywordTrailerOk()}? ;
+EOF_KW         : [eE] CJ? [oO] CJ? [fF] {self._keywordTrailerOk()}? ;
 
 LPAREN         : '(' ;
 RPAREN         : ')' ;
@@ -426,9 +430,19 @@ QUESTION       : '?' ;
 
 // '^' plus CRLF is one escaped ending. The CR is optional so LF-only
 // fixtures continue too. A CR that is not followed by LF is BARE_CR, not
-// this rule.
+// this rule. When the next character is a letter it stays a letter, so this
+// skip leaves FOR/DO/IF to match. A space, parenthesis, quote, or separator
+// in that position is CONTINUED_WORD instead: it is not a delimiter.
 LINE_CONTINUATION
     : '^' '\r'? '\n' -> skip
+    ;
+
+// The joining caret escapes the first character of the next physical line.
+// That character is not a separator or a quote, so `do^` / ` echo` is one
+// word and `& ^` / ` for` is not the FOR keyword.
+CONTINUED_WORD
+    : '^' '\r'? '\n' [ \t()"'^&|<>!%]
+      ( [a-zA-Z0-9_./\\:+\-\u005B\u005D] | ~[\u0000-\u007F] )*
     ;
 
 CARET_ESCAPE
@@ -453,8 +467,15 @@ SQ_STRING
     : '\'' (~[\n'] | '\'\'')* '\''
     ;
 
+// A backtick command is one token only while parentheses stay quoted or
+// caret-escaped. An unquoted '(' or ')' ends the token so it can close IN (.
+fragment BT_QUOTED : '"' (~[\n"] | '""')* '"' ;
+fragment BT_ESCAPED_NL : '^' '\r'? '\n' . ;
+fragment BT_ESCAPED_PAREN : '^' [()] ;
+fragment BT_CHAR : ~[`()"\r\n] ;
+
 BACKTICK_STRING
-    : '`' (~'`' | '``')* '`'
+    : '`' ( '``' | BT_QUOTED | BT_ESCAPED_NL | BT_ESCAPED_PAREN | BT_CHAR )* '`'
     ;
 
 // Valid CALL/? percent-tilde for batch parameters (%~1, %~dp0, %~$PATH:1).
@@ -556,6 +577,9 @@ PERCENT
 // predicate rejects goto:/call: glue so those tokenize as KEYWORD COLON target.
 // Non-ASCII (for example typographic quotes U+201C/U+201D) is ordinary text in
 // live cmd and must not raise token recognition errors.
+// CARET_JOIN inside a word glues the next letter, or one escaped separator,
+// so `d^` / `o` can still be the DO keyword (same length, keyword wins) while
+// `do^` / ` echo` is a longer single word and is not DO.
 WORD           : (
                    [a-zA-Z_]
                  | ~[\u0000-\u007F]
@@ -563,6 +587,11 @@ WORD           : (
                  (
                    [a-zA-Z0-9_./\\:+\-\u005B\u005D]
                  | ~[\u0000-\u007F]
+                   | '^' '\r'? '\n' (
+                     [ \t()"'^&|<>!%]
+                   | [a-zA-Z0-9_./\\:+\-\u005B\u005D]
+                   | ~[\u0000-\u007F]
+                   )
                  )*
                  {self._wordOk()}?
                ;
@@ -585,5 +614,5 @@ UNMATCHED_SQ
     ;
 
 UNMATCHED_BACKTICK
-    : '`' (~[\n`] | '``')*
+    : '`' ( '``' | BT_QUOTED | BT_ESCAPED_NL | BT_ESCAPED_PAREN | BT_CHAR )*
     ;

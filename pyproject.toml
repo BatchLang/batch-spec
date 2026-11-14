@@ -1,6 +1,6 @@
 [project]
 name = "batch-spec"
-version = "0.72.7"
+version = "0.72.8"
 description = "Single source of truth for Windows batch/cmd.exe language structure"
 readme = "README.md"
 license = "AGPL-3.0-or-later"

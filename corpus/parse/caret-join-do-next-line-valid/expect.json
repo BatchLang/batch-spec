@@ -1,0 +1,11 @@
+{
+  "description": "DO on the next physical line of a caret-joined FOR is the DO keyword",
+  "parse": {
+    "should_parse": true,
+    "top_level_statement": "forStmt"
+  },
+  "tags": [
+    "for",
+    "caret"
+  ]
+}

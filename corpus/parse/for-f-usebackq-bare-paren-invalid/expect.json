@@ -1,0 +1,10 @@
+{
+  "description": "An unquoted parenthesis in a usebackq backtick command closes IN",
+  "parse": {
+    "expect_syntax_errors": true
+  },
+  "tags": [
+    "for",
+    "quoting"
+  ]
+}
